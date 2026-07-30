@@ -36,7 +36,7 @@ OpenWRT-CI-H5000M/
 │   ├── Auto-Clean.yml   # 每日清理旧 Release / 运行记录
 │   └── Cache-Clean.yml  # 清理 Actions 缓存
 ├── Config/
-│   ├── GENERAL.txt            # 通用插件与内核模块配置（含 H5000M 专属插件）
+│   ├── GENERAL.txt            # 通用插件与内核模块配置（含 H5000M 专属插件、QModem Next）
 │   └── MEDIATEK-WIFI-YES.txt  # Hiveton H5000M 设备配置（带 Wi-Fi）
 ├── Scripts/
 │   ├── Packages.sh   # 下载 / 更新第三方插件与主题

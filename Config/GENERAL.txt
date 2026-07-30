@@ -19,6 +19,22 @@ CONFIG_PACKAGE_ubus-at-daemon=y
 CONFIG_PACKAGE_sms-tool=y
 CONFIG_PACKAGE_sms-tool_q=y
 
+# QModem Next（纯 JS 前端，不依赖 luci-compat）
+CONFIG_PACKAGE_luci-app-qmodem-next=y
+CONFIG_PACKAGE_luci-i18n-qmodem-next-zh-cn=y
+# QModem 核心脚本与依赖（tom_modem/modem_scan/ubus-at-daemon/sms-tool_q 等随依赖自动选中）
+CONFIG_PACKAGE_qmodem=y
+CONFIG_PACKAGE_sms-forwarder-next=y
+# QMI/串口等驱动依赖优先使用 ImmortalWrt 源码树自带（kmod-usb-net-qmi-wwan 系列已在下方启用），
+# 不启用旧版 luci-app-qmodem，即不会拉取 QModem 自带的厂商私有驱动
+CONFIG_PACKAGE_luci-app-qmodem=n
+CONFIG_PACKAGE_luci-app-qmodem-sms=n
+CONFIG_PACKAGE_luci-app-qmodem-mwan=n
+CONFIG_PACKAGE_luci-app-qmodem-ttl=n
+CONFIG_PACKAGE_luci-app-qmodem-ttlfw4=n
+CONFIG_PACKAGE_luci-app-qmodem-hc=n
+CONFIG_PACKAGE_luci-app-qmodem-monitor=n
+
 # USB 核心支持
 CONFIG_PACKAGE_kmod-usb2=y
 
