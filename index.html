@@ -5,8 +5,8 @@
     <!-- 可访问性修复：移除 maximum-scale / user-scalable=no，允许用户缩放 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#020617">
-    <meta name="description" content="Hiveton H5000M 鼎桥 MT5700M 5G CPE 定制 ImmortalWrt 固件 - 每日自动构建，完美支持 5G + Wi-Fi 7 + 智能温控。内置 homeproxy / easytier / 存储共享 等丰富插件。">
-    <meta name="keywords" content="H5000M, ImmortalWrt, 鼎桥 MT5700M, OpenWrt, 5G CPE, 路由器固件, MediaTek Filogic">
+    <meta name="description" content="Hiveton H5000M 鼎桥 MT5700M 5G CPE 定制 ImmortalWrt 固件 - 每日自动构建，完美支持 5G + Wi-Fi 7 + 智能温控。内置 QModem Next / homeproxy / easytier / 存储共享 等丰富插件。">
+    <meta name="keywords" content="H5000M, ImmortalWrt, 鼎桥 MT5700M, OpenWrt, 5G CPE, 路由器固件, MediaTek Filogic, QModem">
     <title>Hiveton H5000M • ImmortalWrt 鼎桥5G定制固件</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -404,8 +404,8 @@
                 <p class="text-cyan-400 font-medium">以下插件均编译进固件（取自 Config/GENERAL.txt）</p>
             </div>
 
-            <!-- 核心三张：H5000M 专属 -->
-            <div class="grid md:grid-cols-3 gap-6 stagger mb-10">
+            <!-- 核心四张：H5000M 专属 + QModem Next -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 stagger mb-10">
                 <div class="glass-card rounded-3xl p-8 group reveal">
                     <div class="flex justify-between items-start mb-6">
                         <div class="text-4xl text-slate-500 group-hover:text-cyan-400 transition-colors">
@@ -437,6 +437,17 @@
                     </div>
                     <h3 class="font-mono text-2xl font-bold mb-3 text-white">h5000m-netmode</h3>
                     <p class="text-slate-400 text-sm leading-relaxed">智能网络调度，支持 5G 与有线宽带之间的毫秒级切换，集成 MWAN3 复杂负载均衡。</p>
+                </div>
+
+                <div class="glass-card rounded-3xl p-8 group reveal">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="text-4xl text-slate-500 group-hover:text-amber-400 transition-colors">
+                            <i class="fas fa-satellite-dish"></i>
+                        </div>
+                        <span class="text-[10px] font-mono bg-white/5 border border-white/10 px-3 py-1 rounded-full text-slate-300">luci-app</span>
+                    </div>
+                    <h3 class="font-mono text-2xl font-bold mb-3 text-white">qmodem-next</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">QModem 新一代纯 JS 模组管理前端：信号监控、拨号管理、锁频锁小区、AT 调试与短信转发。</p>
                 </div>
             </div>
 
@@ -492,6 +503,8 @@
                             <span class="chip"><i class="fas fa-tower-broadcast"></i>mt5700m</span>
                             <span class="chip"><i class="fas fa-temperature-half"></i>h5000m-fancontrol</span>
                             <span class="chip"><i class="fas fa-route"></i>h5000m-netmode</span>
+                            <span class="chip"><i class="fas fa-satellite-dish"></i>qmodem-next</span>
+                            <span class="chip"><i class="fas fa-paper-plane"></i>sms-forwarder-next</span>
                         </div>
                     </div>
 
