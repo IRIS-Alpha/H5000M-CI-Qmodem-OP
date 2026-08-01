@@ -134,7 +134,7 @@ FUjr [QModem](https://github.com/FUjr/QModem) 的现代 JavaScript LuCI 管理�
 * **📊 模组全景监控**：制造商 / 型号 / 固件 / IMEI、信号质量（RSSI / RSRP / RSRQ / SINR）与网络注册状态实时呈现。
 * **📞 拨号与高级调试**：重新设计的拨号日志与状态显示；支持锁频段、锁小区及自定义 AT 指令。
 * **✉️ 短信管理**：可配合已启用的 `sms-tool` 与 `sms-tool_q` 管理模组短信。
-* **🧬 依赖策略**：QMI / 串口等驱动优先使用 ImmortalWrt 源码树自带组件；QModem 明确选择通用 `kmod-usb-net-qmi-wwan`，不选择可能产生同名模块的厂商 QMI 驱动。
+* **🧬 依赖策略**：QModem 使用 `quectel-CM-5G-M` 与 ImmortalWrt 的通用 `kmod-usb-net-qmi-wwan`；不安装厂商或 NSS QMI 驱动，避免同名内核模块冲突。`ubus-at-daemon`、`tom_modem` 与 `sms-tool_q` 由 QModem 统一依赖管理，并可与设备插件共用。
 * **⚠️ 使用提示**：与 `luci-app-mt5700m` 同为模组管理插件，请避免同时对同一模组高频发送 AT 指令。未启用 QModem 的 MWAN、TTL 等可选扩展。
 
 ---
