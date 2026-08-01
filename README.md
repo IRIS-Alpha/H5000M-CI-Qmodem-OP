@@ -83,7 +83,7 @@ OpenWRT-CI-H5000M/
 
 > **👤 模组管理套件：[FUjr](https://github.com/FUjr)**
 > 
-> 感谢作者开发的 QModem 蜂窝模组综合管理系统。本固件集成 **luci-app-qmodem**，提供模组监控、拨号管理与 AT 调试能力。
+> 感谢作者开发的 QModem 蜂窝模组综合管理系统。本固件集成兼容新版 LuCI 的 **luci-app-qmodem-next**，提供模组监控、拨号管理与 AT 调试能力。
 > * 🔗 **项目链接**：[FUjr/QModem](https://github.com/FUjr/QModem)
 > * 📖 **用户手册**：[user-guide.zh-cn.md](https://github.com/FUjr/QModem/blob/main/docs/user-guide.zh-cn.md)
 
@@ -127,13 +127,14 @@ MT5700M 是本台 CPE 的数据吞吐核心，该插件为其提供了系统级�
 * **🔄 一键切换**：支持在“仅 5G 模式”、“仅有线宽带模式”及“负载均衡/故障转移模式”间快速切换，告别复杂的接口配置。
 * **⚡ 链路检测**：搭配 mwan3，实时监测链路连通状态，主链路故障时实现毫秒级无缝切换，确保网络永不掉线。
 
-### 4. QModem 模组管理 (`luci-app-qmodem`)
-FUjr [QModem](https://github.com/FUjr/QModem) 的 LuCI 管理前端，依赖 `luci-compat` 并与 QModem 核心脚本配套使用。
+### 4. QModem 模组管理 (`luci-app-qmodem-next`)
+
+FUjr [QModem](https://github.com/FUjr/QModem) 的现代 JavaScript LuCI 管理前端，与 QModem 核心脚本配套使用，可在 LuCI 的“网络”菜单中显示。
 
 * **📊 模组全景监控**：制造商 / 型号 / 固件 / IMEI、信号质量（RSSI / RSRP / RSRQ / SINR）与网络注册状态实时呈现。
 * **📞 拨号与高级调试**：重新设计的拨号日志与状态显示；支持锁频段、锁小区及自定义 AT 指令。
 * **✉️ 短信管理**：可配合已启用的 `sms-tool` 与 `sms-tool_q` 管理模组短信。
-* **🧬 依赖策略**：QMI / 串口等驱动优先使用 ImmortalWrt 源码树自带组件；QModem 明确选择通用 `kmod-usb-net-qmi-wwan`，不选择可能产生同名模块的厂商 QMI 驱动。
+* **🧬 依赖策略**：QModem 使用 `quectel-CM-5G-M` 与 ImmortalWrt 的通用 `kmod-usb-net-qmi-wwan`；不安装厂商或 NSS QMI 驱动，避免同名内核模块冲突。`ubus-at-daemon`、`tom_modem` 与 `sms-tool_q` 由 QModem 统一依赖管理，并可与设备插件共用。
 * **⚠️ 使用提示**：与 `luci-app-mt5700m` 同为模组管理插件，请避免同时对同一模组高频发送 AT 指令。未启用 QModem 的 MWAN、TTL 等可选扩展。
 
 ---

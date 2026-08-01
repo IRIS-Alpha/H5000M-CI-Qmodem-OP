@@ -19,16 +19,18 @@ CONFIG_PACKAGE_ubus-at-daemon=y
 CONFIG_PACKAGE_sms-tool=y
 CONFIG_PACKAGE_sms-tool_q=y
 
-# QModem（传统 LuCI 前端）
-CONFIG_PACKAGE_luci-app-qmodem=y
+# QModem（现代 JavaScript LuCI 前端，兼容新版 LuCI）
+CONFIG_PACKAGE_luci-app-qmodem=n
+CONFIG_PACKAGE_luci-app-qmodem-next=y
+CONFIG_PACKAGE_luci-i18n-qmodem-next-zh-cn=y
 # QModem 核心脚本与依赖（tom_modem/modem_scan/ubus-at-daemon/sms-tool_q 等随依赖自动选中）
 CONFIG_PACKAGE_qmodem=y
-# 使用 ImmortalWrt 通用 QMI WWAN 驱动，避免 QModem 厂商驱动与主线模块冲突
-CONFIG_PACKAGE_luci-app-qmodem_INCLUDE_generic-qmi-wwan=y
+# 现代前端不提供传统前端的驱动选项，显式使用 ImmortalWrt 通用驱动与 QModem 连接管理器
+CONFIG_PACKAGE_quectel-CM-5G-M=y
+# 禁用厂商与 NSS QMI 驱动，避免与通用 QMI 驱动产生同名模块冲突
+# CONFIG_PACKAGE_luci-app-qmodem_INCLUDE_generic-qmi-wwan is not set
 # CONFIG_PACKAGE_luci-app-qmodem_INCLUDE_vendor-qmi-wwan is not set
 # CONFIG_PACKAGE_luci-app-qmodem_INCLUDE_nss-qmi-wwan is not set
-CONFIG_PACKAGE_luci-app-qmodem-next=n
-CONFIG_PACKAGE_luci-i18n-qmodem-next-zh-cn=n
 CONFIG_PACKAGE_luci-app-qmodem-sms=n
 CONFIG_PACKAGE_luci-app-qmodem-mwan=n
 CONFIG_PACKAGE_luci-app-qmodem-ttl=n
