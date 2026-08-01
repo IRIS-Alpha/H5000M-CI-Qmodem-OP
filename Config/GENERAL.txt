@@ -19,15 +19,16 @@ CONFIG_PACKAGE_ubus-at-daemon=y
 CONFIG_PACKAGE_sms-tool=y
 CONFIG_PACKAGE_sms-tool_q=y
 
-# QModem Next（纯 JS 前端，不依赖 luci-compat）
-CONFIG_PACKAGE_luci-app-qmodem-next=y
-CONFIG_PACKAGE_luci-i18n-qmodem-next-zh-cn=y
+# QModem（传统 LuCI 前端）
+CONFIG_PACKAGE_luci-app-qmodem=y
 # QModem 核心脚本与依赖（tom_modem/modem_scan/ubus-at-daemon/sms-tool_q 等随依赖自动选中）
 CONFIG_PACKAGE_qmodem=y
-CONFIG_PACKAGE_sms-forwarder-next=y
-# QMI/串口等驱动依赖优先使用 ImmortalWrt 源码树自带（kmod-usb-net-qmi-wwan 系列已在下方启用），
-# 不启用旧版 luci-app-qmodem，即不会拉取 QModem 自带的厂商私有驱动
-CONFIG_PACKAGE_luci-app-qmodem=n
+# 使用 ImmortalWrt 通用 QMI WWAN 驱动，避免 QModem 厂商驱动与主线模块冲突
+CONFIG_PACKAGE_luci-app-qmodem_INCLUDE_generic-qmi-wwan=y
+# CONFIG_PACKAGE_luci-app-qmodem_INCLUDE_vendor-qmi-wwan is not set
+# CONFIG_PACKAGE_luci-app-qmodem_INCLUDE_nss-qmi-wwan is not set
+CONFIG_PACKAGE_luci-app-qmodem-next=n
+CONFIG_PACKAGE_luci-i18n-qmodem-next-zh-cn=n
 CONFIG_PACKAGE_luci-app-qmodem-sms=n
 CONFIG_PACKAGE_luci-app-qmodem-mwan=n
 CONFIG_PACKAGE_luci-app-qmodem-ttl=n
@@ -121,11 +122,7 @@ CONFIG_PACKAGE_kmod-usb-net-asix-ax88179=y
 CONFIG_PACKAGE_kmod-usb-net-rtl8150=y
 CONFIG_PACKAGE_kmod-usb-net-rtl8152=y
 CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y
-# 与 QModem Feed 自带的 kmod-qmi_wwan_f / kmod-qmi_wwan_q 冲突（二者生成同名 .ko），
-# 同时选中会导致 opkg 安装阶段文件覆盖失败 (package/install Error 2)。
-# 保留 QModem Feed 厂商驱动，禁用主线版 QMI WWAN 驱动。
-# CONFIG_PACKAGE_kmod-usb-net-qmi-wwan-fibocom is not set
-# CONFIG_PACKAGE_kmod-usb-net-qmi-wwan-quectel is not set
+# QModem 已选择通用 QMI WWAN 驱动；不选择厂商 QMI 驱动，避免同名内核模块冲突。
 CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y
 CONFIG_PACKAGE_kmod-usb-net-cdc-ncm=y
 CONFIG_PACKAGE_kmod-usb-net-cdc-mbim=y

@@ -70,7 +70,7 @@ UPDATE_PACKAGE "netwizard" "sirpdboy/luci-app-netwizard" "main"
 UPDATE_PACKAGE "openlist2" "sbwml/luci-app-openlist2" "main"
 UPDATE_PACKAGE "partexp" "sirpdboy/luci-app-partexp" "main"
 UPDATE_PACKAGE "qbittorrent" "sbwml/luci-app-qbittorrent" "master" "" "qt6base qt6tools rblibtorrent"
-UPDATE_PACKAGE "qmodem" "FUjr/QModem" "main" # 整仓克隆（各包需引用仓库根 version.mk），实际仅编译 luci-app-qmodem-next 及其依赖，由 Config/GENERAL.txt 控制
+UPDATE_PACKAGE "qmodem" "FUjr/QModem" "main" # 整仓克隆（各包需引用仓库根 version.mk），实际编译包由 Config/GENERAL.txt 控制
 UPDATE_PACKAGE "quickfile" "sbwml/luci-app-quickfile" "main"
 UPDATE_PACKAGE "timecontrol" "sirpdboy/luci-app-timecontrol" "main"
 UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "axonhub gecoosac sing-box luci-app-homeproxy luci-app-timewol luci-app-wolplus luci-app-wolultra"
