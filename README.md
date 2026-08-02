@@ -77,9 +77,13 @@ OpenWRT-CI-H5000M/
 > 
 > 感谢作者为 Hiveton H5000M 及 MT5700M 模组开发的系列核心控制插件，赋予了该设备真正的 5G CPE 灵魂。
 > * 🔗 **主页链接**：[https://github.com/FAN789](https://github.com/FAN789)
-> * 📦 **5G 模组控制**：[luci-app-mt5700m](https://github.com/FAN789/luci-app-mt5700m)
 > * ❄️ **智能风扇温控**：[luci-app-h5000m-fancontrol](https://github.com/FAN789/luci-app-h5000m-fancontrol)
 > * 🔀 **网络模式切换**：[luci-app-h5000m-netmode](https://github.com/FAN789/luci-app-h5000m-netmode)
+
+> **👤 通用模组界面：[LianXia233](https://github.com/LianXia233)**
+>
+> 感谢作者将原 MT5700M 专用界面重构为基于 QModem 的通用 LuCI Web UI，不再绑定具体模组型号。
+> * 📦 **通用模组管理**：[luci-app-qmodem-generic](https://github.com/LianXia233/luci-app-qmodem-generic)
 
 > **👤 模组管理套件：[FUjr](https://github.com/FUjr)**
 > 
@@ -104,15 +108,15 @@ OpenWRT-CI-H5000M/
 
 ## 🧩 二、 核心专属插件详解
 
-固件深度整合了 FAN789 提供的定制插件与 FUjr 的 QModem 模组管理套件，完美释放 Hiveton H5000M 的 5G 硬件潜力。以下是四大核心插件的功能剖析：
+固件深度整合了 FAN789 提供的定制插件、LianXia233 的通用 QModem 界面与 FUjr 的 QModem 模组管理套件，完美释放 Hiveton H5000M 的 5G 硬件潜力。以下是核心插件的功能剖析：
 
-### 1. MT5700M 5G 模组支持 (`luci-app-mt5700m`)
-MT5700M 是本台 CPE 的数据吞吐核心，该插件为其提供了系统级驱动支持与直观的图形化管理界面 (LuCI)。
+### 1. 通用 QModem 模组管理 (`luci-app-qmodem-generic`)
+该插件通过 QModem 的 `qmodem` ubus 接口提供通用 LuCI 管理界面，不绑定具体模组型号，适用于 H5000M 的 MT5700M 模组。
 
-* **📊 状态监控**：在后台实时呈现 5G 信号强度、SA/NSA 网络制式、当前频段、运营商及 IMEI/IMSI 等关键状态。
-* **🔌 连接管理**：兼容 QMI/NCM 等多种拨号协议，实现高速稳定的蜂窝联网。
-* **⚙️ AT 指令交互**：内置 `ubus-at-daemon`，支持通过 Web 界面向模组发送 AT 指令，便于进行高级网络调试或频段锁定。
-* **✉️ 短信功能**：集成 `sms-tool`，支持通过路由器后台接收与发送运营商短信，方便接收流量提醒。
+* **📊 状态监控**：实时展示模组型号、信号质量、网络注册状态、运营商及 IMEI/IMSI 等信息。
+* **🔌 移动数据管理**：支持 APN、拨号、IP 详情与连接会话管理。
+* **📡 射频与小区**：提供频段、邻区、锁频锁小区及诊断功能。
+* **⚙️ AT 与维护**：通过 QModem 的 ubus 接口执行 AT 指令，并提供模组与 SIM 维护操作。
 
 ### 2. 硬件级风扇温控 (`luci-app-h5000m-fancontrol`)
 5G 高速传输伴随显著发热，该插件确保了设备在满负荷运作下的温控稳定。
@@ -135,7 +139,7 @@ FUjr [QModem](https://github.com/FUjr/QModem) 的现代 JavaScript LuCI 管理�
 * **📞 拨号与高级调试**：重新设计的拨号日志与状态显示；支持锁频段、锁小区及自定义 AT 指令。
 * **✉️ 短信管理**：可配合已启用的 `sms-tool` 与 `sms-tool_q` 管理模组短信。
 * **🧬 依赖策略**：QModem 使用 `quectel-CM-5G-M` 与 ImmortalWrt 的通用 `kmod-usb-net-qmi-wwan`；不安装厂商或 NSS QMI 驱动，避免同名内核模块冲突。`ubus-at-daemon`、`tom_modem` 与 `sms-tool_q` 由 QModem 统一依赖管理，并可与设备插件共用。
-* **⚠️ 使用提示**：与 `luci-app-mt5700m` 同为模组管理插件，请避免同时对同一模组高频发送 AT 指令。未启用 QModem 的 MWAN、TTL 等可选扩展。
+* **⚠️ 使用提示**：本固件同时提供 `luci-app-qmodem-generic` 与 `luci-app-qmodem-next` 两个界面，二者均通过 QModem 管理模组，建议避免同时执行拨号或 AT 操作。未启用 QModem 的 MWAN、TTL 等可选扩展。
 
 ---
 
