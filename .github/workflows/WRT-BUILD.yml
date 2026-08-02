@@ -11,11 +11,11 @@ on:
     inputs:
       CONFIG:
         description: '编译配置'
-        default: 'MEDIATEK-WIFI-YES'
+        default: 'H5000M'
         required: true
         type: choice
         options:
-          - MEDIATEK-WIFI-YES
+          - H5000M
       SOURCE:
         description: '源码仓库'
         default: 'immortalwrt/immortalwrt'
