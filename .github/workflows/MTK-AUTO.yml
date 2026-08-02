@@ -1,27 +1,22 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 
+# 定时自动编译：Auto-Clean 清理完成后自动构建 H5000M-WIFI-YES 和 AP3000M
 name: MTK-AUTO
 
 on:
-  # 每天随 Auto-Clean 完成后自动触发
+  # Auto-Clean 完成后自动触发
   workflow_run:
     workflows: ["Auto-Clean"]
     types:
       - completed
-
   # 也可手动触发
   workflow_dispatch:
     inputs:
       PACKAGE:
-        description: '手动调整插件包，多个请用换行隔开。'
+        description: '手动追加插件包（多行请用换行隔开）'
         required: false
         type: string
-      TEST:
-        description: '仅输出配置文件，不编译固件。'
-        default: 'false'
-        required: false
-        type: boolean
 
 permissions: write-all
 
@@ -31,8 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # H5000M 专用：仅编译 MEDIATEK-WIFI-YES
-        CONFIG: [MEDIATEK-WIFI-YES]
+        CONFIG: [H5000M-WIFI-YES, AP3000M]
         SOURCE: [immortalwrt/immortalwrt]
         BRANCH: [master]
 
@@ -52,4 +46,4 @@ jobs:
       WRT_SOURCE: ${{ matrix.SOURCE }}
 
       WRT_PACKAGE: ${{ inputs.PACKAGE }}
-      WRT_TEST: ${{ inputs.TEST }}
+      WRT_TEST: 'false'
