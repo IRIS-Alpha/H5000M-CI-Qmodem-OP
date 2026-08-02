@@ -14,8 +14,8 @@
 
 | 入口工作流 | 触发方式 | 用途 |
 | :--- | :--- | :--- |
-| **WRT-BUILD** | 手动 `workflow_dispatch` | 手动编译 `MEDIATEK-WIFI-YES`，可临时追加插件或仅导出配置文件（`TEST=true`） |
-| **MTK-AUTO** | 每天随 `Auto-Clean` 完成后自动触发，亦可手动 | 自动编译 `MEDIATEK-WIFI-YES` 并发布 Release |
+| **WRT-BUILD** | 手动 `workflow_dispatch` | 手动编译 `H5000M`，可临时追加插件或仅导出配置文件（`TEST=true`） |
+| **MTK-AUTO** | 每天随 `Auto-Clean` 完成后自动触发，亦可手动 | 自动编译 `H5000M` 并发布 Release |
 | **Auto-Clean** | 每日 05:00 (CST) 定时，亦可手动 | 清理旧 Release（保留最近 1 个）与 30 天前的运行记录 |
 | **Cache-Clean** | 每周定时，亦可手动 | 清空 GitHub Actions 缓存 |
 
@@ -32,12 +32,12 @@ OpenWRT-CI-H5000M/
 ├── .github/workflows/
 │   ├── WRT-CORE.yml     # 云编译公用核心（被下面两个调用）
 │   ├── WRT-BUILD.yml    # 手动编译入口
-│   ├── MTK-AUTO.yml     # 定时自动编译 MEDIATEK-WIFI-YES
+│   ├── MTK-AUTO.yml     # 定时自动编译 H5000M
 │   ├── Auto-Clean.yml   # 每日清理旧 Release / 运行记录
 │   └── Cache-Clean.yml  # 清理 Actions 缓存
 ├── Config/
 │   ├── GENERAL.txt            # 通用插件与内核模块配置（含 H5000M 专属插件、QModem）
-│   └── MEDIATEK-WIFI-YES.txt  # Hiveton H5000M 设备配置（带 Wi-Fi）
+│   └── H5000M.txt       # Hiveton H5000M 设备配置（带 Wi-Fi）
 ├── Scripts/
 │   ├── Packages.sh   # 下载 / 更新第三方插件与主题
 │   ├── Handles.sh    # HomeProxy 资源预置与各类插件兼容修复
@@ -55,7 +55,7 @@ OpenWRT-CI-H5000M/
 
 | 配置 | 平台 | 设备 | Wi-Fi |
 | :--- | :--- | :--- | :--- |
-| `MEDIATEK-WIFI-YES` | MediaTek Filogic | Hiveton H5000M（鼎桥 MT5700M 5G CPE） | ✅ 开启 |
+| `H5000M` | MediaTek Filogic | Hiveton H5000M（鼎桥 MT5700M 5G CPE） | ✅ 开启 |
 
 <br>
 
