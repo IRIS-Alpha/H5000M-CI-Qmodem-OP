@@ -15,10 +15,10 @@ CONFIG_PACKAGE_ubus-at-daemon=y
 CONFIG_PACKAGE_sms-tool=y
 CONFIG_PACKAGE_sms-tool_q=y
 
-# QModem（现代 JavaScript LuCI 前端，兼容新版 LuCI）
-CONFIG_PACKAGE_luci-app-qmodem=n
-CONFIG_PACKAGE_luci-app-qmodem-next=y
-CONFIG_PACKAGE_luci-i18n-qmodem-next-zh-cn=y
+# QModem 核心 LuCI 前端与依赖
+CONFIG_PACKAGE_luci-app-qmodem=y
+CONFIG_PACKAGE_luci-app-qmodem-next=n
+CONFIG_PACKAGE_luci-i18n-qmodem-zh-cn=y
 # QModem 核心脚本与依赖（tom_modem/modem_scan/ubus-at-daemon/sms-tool_q 等随依赖自动选中）
 CONFIG_PACKAGE_qmodem=y
 # 现代前端不提供传统前端的驱动选项，显式使用 ImmortalWrt 通用驱动与 QModem 连接管理器
