@@ -15,11 +15,14 @@
 | 入口工作流 | 触发方式 | 用途 |
 | :--- | :--- | :--- |
 | **WRT-BUILD** | 手动 `workflow_dispatch` | 手动编译设备固件，可临时追加插件或仅导出配置文件（`TEST=true`） |
-| **MTK-AUTO** | 每天随 `Auto-Clean` 完成后自动触发，亦可手动 | 自动编译已配置的 MTK 设备并发布 Release |
+| **MTK-AUTO** | 每天随 `Auto-Clean` 完成后自动触发，亦可手动 | 自动编译已配置的 MTK 设备的 QModem Next 与传统 QModem 版本并发布 Release |
+| **OWRT-ALL** | 每天随 `Auto-Clean` 完成后自动触发，亦可手动 | 自动编译 X86 的 QModem Next 与传统 QModem 版本并发布 Release |
 | **Auto-Clean** | 每日 05:00 (CST) 定时，亦可手动 | 清理旧 Release（保留最近 1 个）与 30 天前的运行记录 |
 | **Cache-Clean** | 每周定时，亦可手动 | 清空 GitHub Actions 缓存 |
 
-**手动触发步骤**：进入仓库 `Actions` → 选择 `WRT-BUILD` → `Run workflow`，按需填写选项即可。编译完成后固件会出现在 `Releases` 中。
+**手动触发步骤**：进入仓库 `Actions` → 选择 `WRT-BUILD` → `Run workflow`，选择带 `-qmodem-next` 或 `-qmodem` 后缀的配置。编译完成后，固件会出现在以配置名开头的独立 Release 中。
+
+每个硬件型号均提供两套配置：`*-qmodem-next` 使用现代 JavaScript 前端并启用 `sms-forwarder-next`，`*-qmodem` 使用传统 LuCI 前端及其中文翻译。两套配置共用 `qmodem` 核心、通用 QMI 驱动和连接管理器，不会在同一固件中同时启用两个前端。Release 标签和固件文件名均包含配置后缀，便于区分和选择。
 
 > 💡 仓库根目录的 [`index.html`](./index.html) 是一份精美的固件发布落地页，可直接用 GitHub Pages 托管，或本地打开预览发布信息。
 
@@ -37,10 +40,12 @@ OpenWRT-CI-H5000M/
 │   └── Cache-Clean.yml  # 清理 Actions 缓存
 ├── AP3000M-EEPROM/         # AirPi AP3000M EEPROM 自动初始化（模板 + uci-defaults）
 ├── Config/
-│   ├── GENERAL.txt            # 通用插件与内核模块配置（含 H5000M 专属插件、QModem）
-│   ├── H5000M.txt       # Hiveton H5000M 设备配置
-│   ├── AP3000M.txt      # AirPi AP3000M 设备配置（开源 mt76 Wi-Fi 栈）
-│   └── airpi3000m.txt   # AirPi AP3000M 设备配置（MTK 闭源 Wi-Fi 栈）
+│   ├── GENERAL.txt            # 通用插件与内核模块配置
+│   ├── QMODEM-NEXT.txt        # QModem Next 前端及依赖
+│   ├── QMODEM.txt             # 传统 QModem 前端及依赖
+│   ├── H5000M-*.txt           # Hiveton H5000M 的两种 QModem 配置
+│   ├── AP3000M-*.txt          # AirPi AP3000M（开源 mt76）的两种配置
+│   └── airpi3000m-*.txt      # AirPi AP3000M（MTK 闭源栈）的两种配置
 ├── Scripts/
 │   ├── Packages.sh   # 下载 / 更新第三方插件与主题
 │   ├── Handles.sh    # EEPROM 自动注入、HomeProxy 资源预置与各类插件兼容修复
@@ -140,15 +145,15 @@ OpenWRT-CI-H5000M/
 * **🔄 一键切换**：支持在“仅 5G 模式”、“仅有线宽带模式”及“负载均衡/故障转移模式”间快速切换，告别复杂的接口配置。
 * **⚡ 链路检测**：搭配 mwan3，实时监测链路连通状态，主链路故障时实现毫秒级无缝切换，确保网络永不掉线。
 
-### 4. QModem Next 模组管理 (`luci-app-qmodem-next`)
+### 4. QModem 模组管理（双配置）
 
-FUjr [QModem](https://github.com/FUjr/QModem) 的现代 JavaScript LuCI 管理前端，与 `qmodem` 核心脚本配套使用，可在 LuCI 的“网络”菜单中显示。固件禁用旧版 `luci-app-qmodem`，避免两个前端同时管理同一模组。
+固件提供两种互斥配置：`*-qmodem-next` 使用现代 JavaScript LuCI 前端 `luci-app-qmodem-next`，`*-qmodem` 使用传统 LuCI 前端 `luci-app-qmodem`。两者都与 `qmodem` 核心脚本配套使用，可在 LuCI 的“网络”菜单中显示；单个固件不会同时启用两个前端。
 
 * **📊 模组全景监控**：制造商 / 型号 / 固件 / IMEI、信号质量（RSSI / RSRP / RSRQ / SINR）与网络注册状态实时呈现。
 * **📞 拨号与高级调试**：重新设计的拨号日志与状态显示；支持锁频段、锁小区及自定义 AT 指令。
 * **✉️ 短信管理**：可配合已启用的 `sms-tool` 与 `sms-tool_q` 管理模组短信。
-* **🧬 依赖策略**：QModem Next 依赖 `qmodem` 核心脚本及 `sms-forwarder-next`；核心脚本会带入 `ubus-at-daemon`、`tom_modem`、`modem_scan` 与 `sms-tool_q` 等依赖。固件显式保留 `quectel-CM-5G-M` 与 ImmortalWrt 的通用 `kmod-usb-net-qmi-wwan`，不安装厂商或 NSS QMI 驱动，避免同名内核模块冲突。
-* **⚠️ 使用提示**：本固件同时提供 `luci-app-qmodem-generic` 与 `luci-app-qmodem-next` 两个界面，二者均通过 QModem 管理模组，建议不要同时执行拨号或 AT 操作。QModem Next 不包含 MWAN、TTL 等旧版可选扩展。
+* **🧬 依赖策略**：Next 配置依赖 `qmodem` 核心脚本及 `sms-forwarder-next`；传统配置使用 `luci-i18n-qmodem-zh-cn`。核心脚本会带入 `ubus-at-daemon`、`tom_modem`、`modem_scan` 与 `sms-tool_q` 等依赖。两种配置均显式保留 `quectel-CM-5G-M` 与 ImmortalWrt 的通用 `kmod-usb-net-qmi-wwan`，并选择通用 QMI 驱动，避免厂商或 NSS 驱动冲突。
+* **⚠️ 使用提示**：本固件还提供 `luci-app-qmodem-generic` 通用界面；它与所选 QModem 前端都通过 QModem 管理模组，建议不要同时执行拨号或 AT 操作。QModem Next 不包含 MWAN、TTL 等旧版可选扩展。
 
 ---
 
