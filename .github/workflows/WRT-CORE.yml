@@ -120,7 +120,16 @@ jobs:
 
       - name: Clone Code
         run: |
-          git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
+          if ! git ls-remote --exit-code --heads "$WRT_REPO" "$WRT_BRANCH" >/dev/null; then
+            DEFAULT_BRANCH="$(git ls-remote --symref "$WRT_REPO" HEAD 2>/dev/null | awk '/^ref:/ {sub("refs/heads/", "", $2); print $2; exit}')"
+            echo "::error title=Source branch not found::Branch '$WRT_BRANCH' does not exist in $WRT_REPO."
+            if [ -n "$DEFAULT_BRANCH" ]; then
+              echo "The repository default branch is '$DEFAULT_BRANCH'. Update the BRANCH workflow input and rerun."
+            fi
+            exit 1
+          fi
+
+          git clone --depth=1 --single-branch --branch "$WRT_BRANCH" "$WRT_REPO" ./wrt/
 
           cd ./wrt/ && echo "WRT_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
 

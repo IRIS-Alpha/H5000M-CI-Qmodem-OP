@@ -256,3 +256,33 @@ if [ -f "$RUST_FILE" ]; then
 		echo "rust fix failed; continuing!"
 	fi
 fi
+
+#修复Linux 6.18.40+的ovpn-dco recvmsg接口兼容性
+OVPN_DIR="$(find "$FEEDS_PACKAGES" -maxdepth 3 -type d -wholename '*/ovpn-dco' -print -quit 2>/dev/null)"
+if [ -n "$OVPN_DIR" ] && ! grep -q 'OVPN_PROTO_RECVMSG_HAS_ADDR_LEN' "$OVPN_DIR/linux-compat.h" 2>/dev/null; then
+	echo " "
+	mkdir -p "$OVPN_DIR/patches"
+	cat > "$OVPN_DIR/patches/0002-fix-recvmsg-addr-len-6.18.40.patch" <<'EOF'
+--- a/linux-compat.h
++++ b/linux-compat.h
+@@ -57,0 +58,11 @@
++/*
++ * proto::recvmsg lost the noblock argument in v5.19 and lost the addr_len
++ * argument in v7.1. The addr_len removal was also backported to 6.18.y
++ * starting with v6.18.40 (gregkh/linux@073d957).
++ */
++#define OVPN_PROTO_RECVMSG_HAS_ADDR_LEN \
++        (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 19, 0) && \
++         LINUX_VERSION_CODE < KERNEL_VERSION(7, 1, 0) && \
++         !(LINUX_VERSION_CODE >= KERNEL_VERSION(6, 18, 40) && \
++           LINUX_VERSION_CODE < KERNEL_VERSION(6, 19, 0)))
++
+ #include <linux/if_link.h>
+--- a/drivers/net/ovpn/tcp.c
++++ b/drivers/net/ovpn/tcp.c
+@@ -166 +177 @@
+-#elif LINUX_VERSION_CODE < KERNEL_VERSION(7, 1, 0)
++#elif OVPN_PROTO_RECVMSG_HAS_ADDR_LEN
+EOF
+	echo "ovpn-dco has been fixed!"
+fi
