@@ -88,10 +88,32 @@ jobs:
 
       - name: Initialization Values
         run: |
+          case "$WRT_CONFIG" in
+            ''|*[!A-Za-z0-9._-]*)
+              echo "::error title=Invalid firmware configuration::WRT_CONFIG must contain only letters, numbers, dots, underscores, or hyphens."
+              exit 1
+              ;;
+          esac
+
+          CONFIG_FILE="$GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt"
+          if [ ! -s "$CONFIG_FILE" ]; then
+            echo "::error title=Missing firmware configuration::Configuration '$WRT_CONFIG' was not found at $CONFIG_FILE."
+            echo "Available configurations:"
+            find "$GITHUB_WORKSPACE/Config" -maxdepth 1 -type f -name '*.txt' -printf '%f\n' | sed 's/\.txt$//'
+            exit 1
+          fi
+
+          WRT_TARGET="$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' "$CONFIG_FILE")"
+          if [ -z "$WRT_TARGET" ]; then
+            echo "::error title=Invalid firmware configuration::Configuration '$WRT_CONFIG' does not define a target platform."
+            exit 1
+          fi
+
           echo "WRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
           echo "WRT_MARK=${GITHUB_REPOSITORY%%/*}" >> $GITHUB_ENV
           echo "WRT_INFO=${WRT_SOURCE%%/*}" >> $GITHUB_ENV
-          echo "WRT_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./Config/$WRT_CONFIG.txt)" >> $GITHUB_ENV
+          echo "WRT_CONFIG_FILE=$CONFIG_FILE" >> $GITHUB_ENV
+          echo "WRT_TARGET=$WRT_TARGET" >> $GITHUB_ENV
           echo "WRT_WIFI=wifi-yes" >> $GITHUB_ENV
           echo "WRT_KVER=none" >> $GITHUB_ENV
           echo "WRT_LIST=none" >> $GITHUB_ENV
@@ -118,7 +140,6 @@ jobs:
         uses: actions/cache@v4
         with:
           key: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}-${{env.WRT_HASH}}
-          restore-keys: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}
           path: |
             ./wrt/.ccache
             ./wrt/staging_dir/host*
@@ -167,9 +188,9 @@ jobs:
           cd ./wrt/
 
           if [[ "${WRT_CONFIG,,}" == *"test"* ]]; then
-            cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt >> .config
+            cat "$WRT_CONFIG_FILE" >> .config
           else
-            cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt $GITHUB_WORKSPACE/Config/GENERAL.txt >> .config
+            cat "$WRT_CONFIG_FILE" "$GITHUB_WORKSPACE/Config/GENERAL.txt" >> .config
           fi
 
           $GITHUB_WORKSPACE/Scripts/Settings.sh
