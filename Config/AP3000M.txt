@@ -15,6 +15,11 @@ CONFIG_PACKAGE_kmod-tls=y
 CONFIG_PACKAGE_kmod-mt7915e=y
 CONFIG_PACKAGE_kmod-mt7981-firmware=y
 CONFIG_PACKAGE_mt7981-wo-firmware=y
+# WiFi 运行时与 LuCI 无线管理界面
+CONFIG_PACKAGE_wpad-basic-mbedtls=y
+CONFIG_PACKAGE_wireless-regdb=y
+CONFIG_PACKAGE_iwinfo=y
+CONFIG_PACKAGE_luci-mod-network=y
 
 # AP3000M 专用硬件 (风扇控制)
 CONFIG_PACKAGE_luci-app-airpi-fancontrol=y
