@@ -16,6 +16,8 @@ on:
         type: choice
         options:
           - H5000M
+          - AP3000M
+          - airpi3000m
       SOURCE:
         description: '源码仓库'
         default: 'immortalwrt/immortalwrt'
@@ -24,8 +26,9 @@ on:
         options:
           - immortalwrt/immortalwrt
           - VIKINGYFY/immortalwrt
+          - chasey-dev/immortalwrt-mt798x-rebase
       BRANCH:
-        description: '源码分支（immortalwrt 用 master，VIKINGYFY 用 main）'
+        description: '源码分支（immortalwrt 用 master，VIKINGYFY 用 main，chasey-dev 用 25.12）'
         default: 'master'
         required: true
         type: string

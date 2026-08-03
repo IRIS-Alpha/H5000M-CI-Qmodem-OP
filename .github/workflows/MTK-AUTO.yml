@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 
-# 定时自动编译：Auto-Clean 清理完成后自动构建 H5000M 和 AP3000M
+# 定时自动编译：Auto-Clean 清理完成后自动构建设备固件
 name: MTK-AUTO
 
 on:
@@ -26,9 +26,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        CONFIG: [H5000M, AP3000M]
-        SOURCE: [immortalwrt/immortalwrt]
-        BRANCH: [master]
+        include:
+          - CONFIG: H5000M
+            SOURCE: immortalwrt/immortalwrt
+            BRANCH: master
+          - CONFIG: AP3000M
+            SOURCE: immortalwrt/immortalwrt
+            BRANCH: master
+          - CONFIG: airpi3000m
+            SOURCE: chasey-dev/immortalwrt-mt798x-rebase
+            BRANCH: 25.12
 
     uses: ./.github/workflows/WRT-CORE.yml
     with:
