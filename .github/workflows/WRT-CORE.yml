@@ -117,6 +117,14 @@ jobs:
           echo "WRT_WIFI=wifi-yes" >> $GITHUB_ENV
           echo "WRT_KVER=none" >> $GITHUB_ENV
           echo "WRT_LIST=none" >> $GITHUB_ENV
+          case "$WRT_CONFIG" in
+            *-qmodem)
+              echo "WRT_VARIANT=qmodem" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "WRT_VARIANT=qmodem-next" >> $GITHUB_ENV
+              ;;
+          esac
 
       - name: Clone Code
         run: |
@@ -197,9 +205,13 @@ jobs:
           cd ./wrt/
 
           if [[ "${WRT_CONFIG,,}" == *"test"* ]]; then
-            cat "$WRT_CONFIG_FILE" >> .config
+            VARIANT_FILE="$GITHUB_WORKSPACE/Config/QMODEM-NEXT.txt"
+            [[ "$WRT_VARIANT" == "qmodem" ]] && VARIANT_FILE="$GITHUB_WORKSPACE/Config/QMODEM.txt"
+            cat "$WRT_CONFIG_FILE" "$VARIANT_FILE" >> .config
           else
-            cat "$WRT_CONFIG_FILE" "$GITHUB_WORKSPACE/Config/GENERAL.txt" >> .config
+            VARIANT_FILE="$GITHUB_WORKSPACE/Config/QMODEM-NEXT.txt"
+            [[ "$WRT_VARIANT" == "qmodem" ]] && VARIANT_FILE="$GITHUB_WORKSPACE/Config/QMODEM.txt"
+            cat "$WRT_CONFIG_FILE" "$GITHUB_WORKSPACE/Config/GENERAL.txt" "$VARIANT_FILE" >> .config
           fi
 
           $GITHUB_WORKSPACE/Scripts/Settings.sh
@@ -264,6 +276,8 @@ jobs:
           files: ./wrt/upload/*.*
           body: |
             Hiveton H5000M (MT5700M) 定制固件 · 基于 ImmortalWrt
+
+            QModem 配置：${{env.WRT_VARIANT}}
 
             源码：${{env.WRT_REPO}}
             分支：${{env.WRT_BRANCH}}

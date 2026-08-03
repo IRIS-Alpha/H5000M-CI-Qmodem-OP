@@ -27,13 +27,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - CONFIG: H5000M
+          - CONFIG: H5000M-qmodem-next
             SOURCE: immortalwrt/immortalwrt
             BRANCH: master
-          - CONFIG: AP3000M
+          - CONFIG: H5000M-qmodem
             SOURCE: immortalwrt/immortalwrt
             BRANCH: master
-          - CONFIG: airpi3000m
+          - CONFIG: AP3000M-qmodem-next
+            SOURCE: immortalwrt/immortalwrt
+            BRANCH: master
+          - CONFIG: AP3000M-qmodem
+            SOURCE: immortalwrt/immortalwrt
+            BRANCH: master
+          - CONFIG: airpi3000m-qmodem-next
+            SOURCE: chasey-dev/immortalwrt-mt798x-rebase
+            BRANCH: 25.12
+          - CONFIG: airpi3000m-qmodem
             SOURCE: chasey-dev/immortalwrt-mt798x-rebase
             BRANCH: 25.12
 
