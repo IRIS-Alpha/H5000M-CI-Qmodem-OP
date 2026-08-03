@@ -14,8 +14,8 @@
 
 | 入口工作流 | 触发方式 | 用途 |
 | :--- | :--- | :--- |
-| **WRT-BUILD** | 手动 `workflow_dispatch` | 手动编译 `H5000M`，可临时追加插件或仅导出配置文件（`TEST=true`） |
-| **MTK-AUTO** | 每天随 `Auto-Clean` 完成后自动触发，亦可手动 | 自动编译 `H5000M` 并发布 Release |
+| **WRT-BUILD** | 手动 `workflow_dispatch` | 手动编译设备固件，可临时追加插件或仅导出配置文件（`TEST=true`） |
+| **MTK-AUTO** | 每天随 `Auto-Clean` 完成后自动触发，亦可手动 | 自动编译已配置的 MTK 设备并发布 Release |
 | **Auto-Clean** | 每日 05:00 (CST) 定时，亦可手动 | 清理旧 Release（保留最近 1 个）与 30 天前的运行记录 |
 | **Cache-Clean** | 每周定时，亦可手动 | 清空 GitHub Actions 缓存 |
 
@@ -32,12 +32,13 @@ OpenWRT-CI-H5000M/
 ├── .github/workflows/
 │   ├── WRT-CORE.yml     # 云编译公用核心（被下面两个调用）
 │   ├── WRT-BUILD.yml    # 手动编译入口
-│   ├── MTK-AUTO.yml     # 定时自动编译 H5000M
+│   ├── MTK-AUTO.yml     # 定时自动编译 MTK 设备
 │   ├── Auto-Clean.yml   # 每日清理旧 Release / 运行记录
 │   └── Cache-Clean.yml  # 清理 Actions 缓存
 ├── Config/
 │   ├── GENERAL.txt            # 通用插件与内核模块配置（含 H5000M 专属插件、QModem）
-│   └── H5000M.txt       # Hiveton H5000M 设备配置（带 Wi-Fi）
+│   ├── H5000M.txt       # Hiveton H5000M 设备配置
+│   └── airpi3000m.txt   # AirPi AP3000M 设备配置（MTK 闭源 Wi-Fi 栈）
 ├── Scripts/
 │   ├── Packages.sh   # 下载 / 更新第三方插件与主题
 │   ├── Handles.sh    # HomeProxy 资源预置与各类插件兼容修复
@@ -51,11 +52,14 @@ OpenWRT-CI-H5000M/
 
 ## 🎯 支持的编译配置
 
-本仓库仅面向 **Hiveton H5000M (MT5700M)** 一台设备，对应单个配置：
+本仓库提供以下设备编译配置：
 
 | 配置 | 平台 | 设备 | Wi-Fi |
 | :--- | :--- | :--- | :--- |
 | `H5000M` | MediaTek Filogic | Hiveton H5000M（鼎桥 MT5700M 5G CPE） | ✅ 开启 |
+| `airpi3000m` | MediaTek Filogic / MT7981 | AirPi AP3000M | ✅ 开启 |
+
+`airpi3000m` 使用 `chasey-dev/immortalwrt-mt798x-rebase` 的 `25.12` 分支；该分支与 [wxl0055/airpi-ap3000m-25.12](https://github.com/wxl0055/airpi-ap3000m-25.12) 的 AirPi 配置一致，包含所需的 MTK 闭源 Wi-Fi 驱动栈。其余插件统一继承 `Config/GENERAL.txt`。手动运行 `WRT-BUILD` 时请选择该源码和 `25.12` 分支。
 
 <br>
 
