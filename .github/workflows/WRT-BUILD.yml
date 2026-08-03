@@ -11,13 +11,18 @@ on:
     inputs:
       CONFIG:
         description: '编译配置'
-        default: 'H5000M'
+        default: 'H5000M-qmodem-next'
         required: true
         type: choice
         options:
-          - H5000M
-          - AP3000M
-          - airpi3000m
+          - H5000M-qmodem-next
+          - H5000M-qmodem
+          - AP3000M-qmodem-next
+          - AP3000M-qmodem
+          - airpi3000m-qmodem-next
+          - airpi3000m-qmodem
+          - X86-qmodem-next
+          - X86-qmodem
       SOURCE:
         description: '源码仓库'
         default: 'immortalwrt/immortalwrt'
