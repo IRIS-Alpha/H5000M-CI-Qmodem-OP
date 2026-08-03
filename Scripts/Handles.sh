@@ -286,3 +286,23 @@ if [ -n "$OVPN_DIR" ] && ! grep -q 'OVPN_PROTO_RECVMSG_HAS_ADDR_LEN' "$OVPN_DIR/
 EOF
 	echo "ovpn-dco has been fixed!"
 fi
+
+# AP3000M EEPROM 模板注入 (MT7981 + MT7976 DBDC 开源驱动)
+# 将备份的 EEPROM 模板（含原厂校准数据）和首次启动初始化脚本注入固件
+# 解决 eMMC 设备 factory 分区空白导致 mt76 驱动 eeprom load fail 的问题
+AP3000M_EEPROM_DIR="$GITHUB_WORKSPACE/AP3000M-EEPROM"
+if [ -d "$AP3000M_EEPROM_DIR" ]; then
+	FILES_DIR="../files"
+	mkdir -p "$FILES_DIR/lib/firmware/mediatek/"
+	mkdir -p "$FILES_DIR/etc/uci-defaults/"
+
+	if cp "$AP3000M_EEPROM_DIR/mt7981_eeprom_mt7976_dbdc.bin" \
+		"$FILES_DIR/lib/firmware/mediatek/mt7981_eeprom_mt7976_dbdc.bin" && \
+	   cp "$AP3000M_EEPROM_DIR/99-ap3000m-eeprom" \
+		"$FILES_DIR/etc/uci-defaults/99-ap3000m-eeprom" && \
+	   chmod +x "$FILES_DIR/etc/uci-defaults/99-ap3000m-eeprom"; then
+		echo "AP3000M: EEPROM template and init script has been injected!"
+	else
+		echo "AP3000M: EEPROM injection failed; continuing!"
+	fi
+fi
