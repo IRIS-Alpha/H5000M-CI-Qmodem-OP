@@ -35,13 +35,15 @@ OpenWRT-CI-H5000M/
 │   ├── MTK-AUTO.yml     # 定时自动编译 MTK 设备
 │   ├── Auto-Clean.yml   # 每日清理旧 Release / 运行记录
 │   └── Cache-Clean.yml  # 清理 Actions 缓存
+├── AP3000M-EEPROM/         # AirPi AP3000M EEPROM 自动初始化（模板 + uci-defaults）
 ├── Config/
 │   ├── GENERAL.txt            # 通用插件与内核模块配置（含 H5000M 专属插件、QModem）
 │   ├── H5000M.txt       # Hiveton H5000M 设备配置
+│   ├── AP3000M.txt      # AirPi AP3000M 设备配置（开源 mt76 Wi-Fi 栈）
 │   └── airpi3000m.txt   # AirPi AP3000M 设备配置（MTK 闭源 Wi-Fi 栈）
 ├── Scripts/
 │   ├── Packages.sh   # 下载 / 更新第三方插件与主题
-│   ├── Handles.sh    # HomeProxy 资源预置与各类插件兼容修复
+│   ├── Handles.sh    # EEPROM 自动注入、HomeProxy 资源预置与各类插件兼容修复
 │   └── Settings.sh   # 默认值、WIFI、主机名等个性化设置
 ├── index.html        # 固件发布落地页
 ├── LICENSE
@@ -57,7 +59,10 @@ OpenWRT-CI-H5000M/
 | 配置 | 平台 | 设备 | Wi-Fi |
 | :--- | :--- | :--- | :--- |
 | `H5000M` | MediaTek Filogic | Hiveton H5000M（鼎桥 MT5700M 5G CPE） | ✅ 开启 |
-| `airpi3000m` | MediaTek Filogic / MT7981 | AirPi AP3000M | ✅ 开启 |
+| `AP3000M` | MediaTek Filogic / MT7981 | AirPi AP3000M | ✅ 开启（开源 mt76） |
+| `airpi3000m` | MediaTek Filogic / MT7981 | AirPi AP3000M | ✅ 开启（MTK 闭源） |
+
+`AP3000M` 基于 ImmortalWrt 主线源码编译，使用开源 `mt76` Wi-Fi 驱动栈，无需额外闭源驱动。EEPROM 通过 `Handles.sh` 在构建时自动注入，首次启动时由 `AP3000M-EEPROM/99-ap3000m-eeprom` 写入 `factory` 分区，修正 radio1 为 5G 模式。手动运行 `WRT-BUILD` 时直接选择 ImmortalWrt 主线源码即可。
 
 `airpi3000m` 使用 `chasey-dev/immortalwrt-mt798x-rebase` 的 `25.12` 分支；该分支与 [wxl0055/airpi-ap3000m-25.12](https://github.com/wxl0055/airpi-ap3000m-25.12) 的 AirPi 配置一致，包含所需的 MTK 闭源 Wi-Fi 驱动栈。其余插件统一继承 `Config/GENERAL.txt`。手动运行 `WRT-BUILD` 时请选择该源码和 `25.12` 分支。
 
@@ -158,5 +163,5 @@ FUjr [QModem](https://github.com/FUjr/QModem) 的现代 JavaScript LuCI 管理�
 
 <br>
 
-> 📅 *文档更新日期：2026年7月*
+> 📅 *文档更新日期：2026年8月*
 > 💡 *本说明文档由项目编译配置与社区开源信息整合生成。*
