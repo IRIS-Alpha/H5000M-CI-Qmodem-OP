@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🚀 Hiveton H5000M (MT5700M) 定制固件说明书
+# 🚀 H5000M & AP3000M & x86 · ImmortalWrt 定制固件说明书
 
-*基于 ImmortalWrt 主线源码，专为联发科 Filogic 平台 5G CPE 打造的定制化编译配置与模组解析*
+*基于 ImmortalWrt 主线源码，覆盖 Hiveton H5000M、AirPi AP3000M 与 x86 平台的定制化编译配置与模组解析*
 
 </div>
 
@@ -10,7 +10,7 @@
 
 ## 🚀 快速开始
 
-本仓库通过 GitHub Actions 自动编译 Hiveton H5000M 的 ImmortalWrt 固件，无需本地搭建编译环境。
+本仓库通过 GitHub Actions 自动编译 H5000M、AP3000M 与 x86 平台的 ImmortalWrt 固件，无需本地搭建编译环境。
 
 | 入口工作流 | 触发方式 | 用途 |
 | :--- | :--- | :--- |
