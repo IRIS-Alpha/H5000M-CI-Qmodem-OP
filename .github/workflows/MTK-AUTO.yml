@@ -39,12 +39,7 @@ jobs:
           - CONFIG: AP3000M-qmodem
             SOURCE: immortalwrt/immortalwrt
             BRANCH: master
-          - CONFIG: airpi3000m-qmodem-next
-            SOURCE: chasey-dev/immortalwrt-mt798x-rebase
-            BRANCH: 25.12
-          - CONFIG: airpi3000m-qmodem
-            SOURCE: chasey-dev/immortalwrt-mt798x-rebase
-            BRANCH: 25.12
+          
 
     uses: ./.github/workflows/WRT-CORE.yml
     with:
