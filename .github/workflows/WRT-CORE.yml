@@ -134,9 +134,6 @@ jobs:
             AP3000M-*)
               WRT_MODEL="AirPi AP3000M"
               ;;
-            airpi3000m-*)
-              WRT_MODEL="AirPi AP3000M (MTK 闭源)"
-              ;;
             X86-*)
               WRT_MODEL="x86 通用平台"
               ;;

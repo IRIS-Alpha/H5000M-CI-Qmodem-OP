@@ -19,8 +19,6 @@ on:
           - H5000M-qmodem
           - AP3000M-qmodem-next
           - AP3000M-qmodem
-          - airpi3000m-qmodem-next
-          - airpi3000m-qmodem
           - X86-qmodem-next
           - X86-qmodem
       SOURCE:
