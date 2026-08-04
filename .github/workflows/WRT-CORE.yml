@@ -126,6 +126,26 @@ jobs:
               ;;
           esac
 
+          # 根据配置推导机型显示名称
+          case "$WRT_CONFIG" in
+            H5000M-*)
+              WRT_MODEL="Hiveton H5000M (MT5700M)"
+              ;;
+            AP3000M-*)
+              WRT_MODEL="AirPi AP3000M"
+              ;;
+            airpi3000m-*)
+              WRT_MODEL="AirPi AP3000M (MTK 闭源)"
+              ;;
+            X86-*)
+              WRT_MODEL="x86 通用平台"
+              ;;
+            *)
+              WRT_MODEL="Unknown Device"
+              ;;
+          esac
+          echo "WRT_MODEL=$WRT_MODEL" >> $GITHUB_ENV
+
       - name: Clone Code
         run: |
           if ! git ls-remote --exit-code --heads "$WRT_REPO" "$WRT_BRANCH" >/dev/null; then
@@ -275,7 +295,7 @@ jobs:
           tag_name: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}-${{env.WRT_BRANCH}}-${{env.WRT_DATE}}
           files: ./wrt/upload/*.*
           body: |
-            Hiveton H5000M (MT5700M) 定制固件 · 基于 ImmortalWrt
+            ${{ env.WRT_MODEL }} 定制固件 · 基于 ImmortalWrt
 
             QModem 配置：${{env.WRT_VARIANT}}
 

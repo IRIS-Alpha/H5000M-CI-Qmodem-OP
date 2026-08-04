@@ -5,9 +5,9 @@
     <!-- 可访问性修复：移除 maximum-scale / user-scalable=no，允许用户缩放 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#020617">
-    <meta name="description" content="Hiveton H5000M 鼎桥 MT5700M 5G CPE & AirPi AP3000M 定制 ImmortalWrt 固件 - 每日自动构建，支持 5G + Wi-Fi 7 + 智能温控。AP3000M 开源 mt76 驱动，EEPROM 自动初始化。内置 QModem Generic / QModem Next / homeproxy / easytier / 存储共享等丰富插件。">
-    <meta name="keywords" content="H5000M, AP3000M, AirPi, ImmortalWrt, 鼎桥 MT5700M, OpenWrt, 5G CPE, 路由器固件, MediaTek Filogic, mt76, QModem">
-    <title>H5000M & AP3000M • ImmortalWrt 定制固件</title>
+    <meta name="description" content="Hiveton H5000M (鼎桥 MT5700M 5G CPE) &amp; AirPi AP3000M 定制 ImmortalWrt 固件 - 每日自动构建，支持 5G + Wi-Fi 7 + 智能温控。AP3000M 开源 mt76 驱动，EEPROM 自动初始化。内置 QModem Generic / QModem Next / homeproxy / easytier / 存储共享等丰富插件。">
+    <meta name="keywords" content="H5000M, AP3000M, AirPi, ImmortalWrt, 鼎桥 MT5700M, OpenWrt, 5G CPE, 路由器固件, MediaTek Filogic, mt76, QModem, x86 软路由">
+    <title>H5000M &amp; AP3000M &amp; x86 · ImmortalWrt 定制固件</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -231,7 +231,222 @@
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </span>
+            <span class="text-slate-300 font-medium">每日自动构建 · H5000M / AP3000M / x86</span>
+        </div>
+
+        <h1 class="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-tight max-w-4xl">
+            <span class="text-gradient">ImmortalWrt</span>
+            <br>
+            <span class="text-gradient-cyan">定制固件</span>
+        </h1>
+
+        <p class="mt-8 max-w-2xl text-base sm:text-lg text-slate-400 leading-relaxed">
+            专为 Hiveton H5000M (MT5700M 5G CPE)、AirPi AP3000M 及 x86 平台打造<br>
+            每日自动构建 · 5G 蜂窝 + Wi-Fi 7 · 智能温控 · 开源驱动
+        </p>
+
+        <div class="mt-10 flex flex-col sm:flex-row gap-4">
+            <a href="https://github.com/LianXia233/H5000M-CI-Qmodem/releases" target="_blank" rel="noopener noreferrer"
+               class="hero-btn px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-sm rounded-xl shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 active:scale-95 transition-all duration-300">
+                <i class="fas fa-download mr-2"></i>下载固件
+            </a>
+            <a href="#features"
+               class="px-8 py-3.5 border border-white/15 text-slate-200 font-bold text-sm rounded-xl hover:bg-white/5 hover:border-white/25 active:scale-95 transition-all duration-300">
+                <i class="fas fa-microchip mr-2"></i>查看设备
+            </a>
         </div>
     </header>
+
+    <!-- 支持的设备 -->
+    <section id="features" class="relative max-w-7xl mx-auto px-6 py-20 lg:py-28">
+        <div class="text-center mb-16 reveal">
+            <span class="text-cyan-400 text-xs font-bold tracking-[0.2em] uppercase">Supported Devices</span>
+            <h2 class="text-3xl sm:text-4xl font-bold text-gradient mt-4">支持的设备型号</h2>
+            <p class="mt-4 text-slate-400 max-w-2xl mx-auto">三种配置覆盖主流 5G CPE 与软路由平台，每日自动构建确保固件始终最新</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 stagger">
+            <!-- H5000M -->
+            <div class="glass-card rounded-2xl p-8 reveal">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center mb-5 shadow-lg shadow-cyan-500/20">
+                    <i class="fas fa-wifi text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Hiveton H5000M</h3>
+                <p class="text-slate-400 text-sm leading-relaxed mb-4">鼎桥 MT5700M 5G CPE · MediaTek Filogic 平台 · Wi-Fi 7</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="chip"><i class="fas fa-signal"></i> 5G SA/NSA</span>
+                    <span class="chip"><i class="fas fa-fan"></i> 智能温控</span>
+                    <span class="chip"><i class="fas fa-exchange-alt"></i> 网络切换</span>
+                </div>
+            </div>
+
+            <!-- AP3000M -->
+            <div class="glass-card rounded-2xl p-8 reveal">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center mb-5 shadow-lg shadow-violet-500/20">
+                    <i class="fas fa-broadcast-tower text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">AirPi AP3000M</h3>
+                <p class="text-slate-400 text-sm leading-relaxed mb-4">MT7981 开源 mt76 驱动 · EEPROM 自动初始化 · 双频 Wi-Fi</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="chip"><i class="fas fa-microchip"></i> 开源驱动</span>
+                    <span class="chip"><i class="fas fa-database"></i> 自动 EEPROM</span>
+                    <span class="chip"><i class="fas fa-fan"></i> GPIO 风扇</span>
+                </div>
+            </div>
+
+            <!-- x86 -->
+            <div class="glass-card rounded-2xl p-8 reveal">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center mb-5 shadow-lg shadow-emerald-500/20">
+                    <i class="fas fa-server text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">x86 通用平台</h3>
+                <p class="text-slate-400 text-sm leading-relaxed mb-4">x86_64 软路由 / 虚拟机 · 多网卡支持 · Docker 就绪</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="chip"><i class="fas fa-desktop"></i> 软路由</span>
+                    <span class="chip"><i class="fas fa-docker"></i> Docker</span>
+                    <span class="chip"><i class="fas fa-network-wired"></i> 多网卡</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 技术规格 -->
+    <section id="specs" class="relative max-w-7xl mx-auto px-6 py-20 lg:py-28">
+        <div class="text-center mb-16 reveal">
+            <span class="text-cyan-400 text-xs font-bold tracking-[0.2em] uppercase">Technical Specs</span>
+            <h2 class="text-3xl sm:text-4xl font-bold text-gradient mt-4">固件技术规格</h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 stagger">
+            <div class="glass-card rounded-2xl p-6 reveal text-center">
+                <i class="fas fa-code-branch text-3xl text-cyan-400 mb-4"></i>
+                <h4 class="text-white font-bold mb-2">ImmortalWrt 主线</h4>
+                <p class="text-slate-400 text-sm">基于最新主线源码，稳定可靠</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 reveal text-center">
+                <i class="fas fa-sync-alt text-3xl text-blue-400 mb-4"></i>
+                <h4 class="text-white font-bold mb-2">每日自动构建</h4>
+                <p class="text-slate-400 text-sm">GitHub Actions 自动化编译</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 reveal text-center">
+                <i class="fas fa-shield-alt text-3xl text-emerald-400 mb-4"></i>
+                <h4 class="text-white font-bold mb-2">内核加速</h4>
+                <p class="text-slate-400 text-sm">cryptodev + TLS 硬件加解密</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 reveal text-center">
+                <i class="fas fa-plug text-3xl text-purple-400 mb-4"></i>
+                <h4 class="text-white font-bold mb-2">丰富插件生态</h4>
+                <p class="text-slate-400 text-sm">QModem / homeproxy / easytier 等</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 内置插件 -->
+    <section id="plugins" class="relative max-w-7xl mx-auto px-6 py-20 lg:py-28">
+        <div class="text-center mb-16 reveal">
+            <span class="text-cyan-400 text-xs font-bold tracking-[0.2em] uppercase">Built-in Plugins</span>
+            <h2 class="text-3xl sm:text-4xl font-bold text-gradient mt-4">内置精选插件</h2>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 stagger">
+            <div class="glass-card rounded-xl p-4 reveal flex items-center gap-3">
+                <i class="fas fa-signal text-cyan-400 text-lg"></i>
+                <span class="text-slate-200 text-sm font-medium">QModem 模组管理</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 reveal flex items-center gap-3">
+                <i class="fas fa-globe text-blue-400 text-lg"></i>
+                <span class="text-slate-200 text-sm font-medium">homeproxy</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 reveal flex items-center gap-3">
+                <i class="fas fa-network-wired text-purple-400 text-lg"></i>
+                <span class="text-slate-200 text-sm font-medium">easytier 异地组网</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 reveal flex items-center gap-3">
+                <i class="fas fa-shield-haltered text-emerald-400 text-lg"></i>
+                <span class="text-slate-200 text-sm font-medium">OpenClash</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 reveal flex items-center gap-3">
+                <i class="fas fa-cloud text-sky-400 text-lg"></i>
+                <span class="text-slate-200 text-sm font-medium">PassWall / PassWall2</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 reveal flex items-center gap-3">
+                <i class="fas fa-project-diagram text-amber-400 text-lg"></i>
+                <span class="text-slate-200 text-sm font-medium">Tailscale</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 reveal flex items-center gap-3">
+                <i class="fas fa-database text-orange-400 text-lg"></i>
+                <span class="text-slate-200 text-sm font-medium">Samba4 / 磁盘管理</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 reveal flex items-center gap-3">
+                <i class="fas fa-search text-pink-400 text-lg"></i>
+                <span class="text-slate-200 text-sm font-medium">mosdns</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 py-10">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+            <p>&copy; 2026 H5000M-CI-Qmodem · Powered by ImmortalWrt &amp; GitHub Actions</p>
+            <div class="flex items-center gap-6">
+                <a href="https://github.com/LianXia233/H5000M-CI-Qmodem" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 transition-colors">
+                    <i class="fab fa-github mr-1"></i>GitHub
+                </a>
+                <a href="https://github.com/LianXia233/H5000M-CI-Qmodem/releases" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 transition-colors">
+                    <i class="fas fa-rocket mr-1"></i>Releases
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JS: 滚动视差 / 进度条 / 移动端菜单 / 入场动画 -->
+    <script>
+        (function() {
+            // 进度条
+            const progress = document.getElementById('progress');
+            window.addEventListener('scroll', function() {
+                const h = document.documentElement;
+                const st = h.scrollTop || document.body.scrollTop;
+                const sh = h.scrollHeight || document.body.scrollHeight;
+                const pct = (st / (sh - h.clientHeight)) * 100;
+                if (progress) progress.style.width = pct + '%';
+            });
+
+            // 移动端菜单
+            const menuBtn = document.getElementById('menuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (menuBtn && mobileMenu) {
+                menuBtn.addEventListener('click', function() {
+                    const expanded = mobileMenu.classList.toggle('hidden');
+                    menuBtn.setAttribute('aria-expanded', !expanded);
+                });
+
+                // 点击菜单项后关闭
+                mobileMenu.querySelectorAll('a').forEach(function(link) {
+                    link.addEventListener('click', function() {
+                        mobileMenu.classList.add('hidden');
+                        menuBtn.setAttribute('aria-expanded', 'false');
+                    });
+                });
+            }
+
+            // 滚动入场动画 (Intersection Observer)
+            var reveals = document.querySelectorAll('.reveal');
+            if ('IntersectionObserver' in window && reveals.length) {
+                var observer = new IntersectionObserver(function(entries) {
+                    entries.forEach(function(entry) {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { rootMargin: '0px 0px -50px 0px' });
+                reveals.forEach(function(el) { observer.observe(el); });
+            } else {
+                // 降级：全部显示
+                reveals.forEach(function(el) { el.classList.add('is-visible'); });
+            }
+        })();
+    </script>
 </body>
 </html>
