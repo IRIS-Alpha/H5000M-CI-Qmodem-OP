@@ -8,6 +8,56 @@
 
 <br>
 
+> [!IMPORTANT]
+> 本仓库是 [IRIS-Alpha/H5000M-CI-Qmodem-OP](https://github.com/IRIS-Alpha/H5000M-CI-Qmodem-OP)，基于 [LianXia233/H5000M-CI-Qmodem](https://github.com/LianXia233/H5000M-CI-Qmodem) Fork 并继续维护。
+>
+> 本 Fork 不声称拥有上游项目、ImmortalWrt 或任何第三方组件的原始版权。上游代码、配置、脚本和第三方软件包仍受其各自许可证及版权声明约束。使用、再发布或再次 Fork 前，请保留相关许可证和作者信息，并分别遵守对应项目的条款。
+
+## 📜 来源、Fork 与许可证
+
+### 上游项目
+
+- **直接上游**：[LianXia233/H5000M-CI-Qmodem](https://github.com/LianXia233/H5000M-CI-Qmodem)
+- **系统源码**：[ImmortalWrt/immortalwrt](https://github.com/immortalwrt/immortalwrt)
+- **编译框架与基础配置来源**：[VIKINGYFY/OpenWRT-CI](https://github.com/VIKINGYFY/OpenWRT-CI)
+
+请将本仓库视为上游项目的社区 Fork，而不是上游项目的官方发行版。上游项目的设计、代码和配置应优先以其仓库及文档为准；本 Fork 的构建结果不代表上游作者的立场，也不意味着上游作者为本 Fork 提供支持或背书。
+
+### 本 Fork 的维护范围
+
+本 Fork 主要服务于维护者自己的 Hiveton H5000M 使用场景，不是面向所有设备的通用发行版。当前改动范围保持克制，主要包括：
+
+- H5000M 系列固件的编译配置与发布维护；
+- 在现有构建基础上添加 OpenClash 支持及其所需依赖；
+- 移除 HomeProxy、sing-box 及其相关配置，避免两套代理方案同时进入目标固件；
+- 对 GitHub Actions Release 中的配置文件和软件包清单进行核对。
+
+除上述内容外，本 Fork 没有声称对 QModem、设备驱动、引导程序、无线校准数据或其他上游组件进行了深度开发。其他机型的配置仍保留自上游项目，但不属于本 Fork 当前的重点维护范围；使用者应自行确认设备型号、配置适配性和许可证要求。
+
+具体版本应以每次 Release 附带的 `Config-*.txt`、`*.manifest` 和 Release 正文为准，不要仅根据 README 推断某个固件一定包含某个软件包。
+
+### 许可证边界
+
+- 本仓库中由本 Fork 维护者新增或修改的脚本、配置和文档，除文件另有说明外，沿用仓库 [MIT License](./LICENSE)。
+- `ImmortalWrt`、LuCI、Linux 内核、设备驱动及各第三方软件包不因被本仓库编译或打包而转为 MIT；它们继续适用各自的许可证。
+- 第三方软件包可能包含 GPL、MIT、Apache-2.0 或其他许可证的代码。再发布固件时，请同时保留对应的许可证、版权声明和源码获取渠道。
+- Release 中的固件仅供用户自行评估和使用。刷写前请确认设备型号、备份配置和重要分区；本 Fork 不对第三方组件或刷写结果作超出其许可证范围的保证。
+
+### 第三方项目与资源
+
+本仓库通过 `Scripts/Packages.sh`、`Scripts/Handles.sh` 或 ImmortalWrt feeds 拉取多个开源项目。除上游项目外，至少包括：
+
+| 项目 | 用途 | 来源 |
+| :--- | :--- | :--- |
+| OpenClash | LuCI 代理管理界面 | [vernesong/OpenClash](https://github.com/vernesong/OpenClash) |
+| QModem | 蜂窝模组核心与管理界面 | [FUjr/QModem](https://github.com/FUjr/QModem) |
+| QModem Generic | 通用模组管理界面 | [LianXia233/luci-app-qmodem-generic](https://github.com/LianXia233/luci-app-qmodem-generic) |
+| H5000M 风扇与网络模式 | H5000M 专用硬件功能 | [FAN789](https://github.com/FAN789)、[LianXia233](https://github.com/LianXia233) |
+| Aurora、EasyTier、Tailscale 等 | 主题、组网及管理扩展 | 见 [`Scripts/Packages.sh`](./Scripts/Packages.sh) |
+| HomeProxy 资源 | IP、GeoSite 与 Dashboard 资源 | [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules)、[SagerNet/sing-geosite](https://github.com/SagerNet/sing-geosite)、[SagerNet/sing-box-dashboard](https://github.com/SagerNet/sing-box-dashboard) |
+
+第三方项目的名称、商标、版权和许可证归其各自权利人所有。若某个软件包的许可证与本节概述不一致，以该软件包源代码中的许可证和版权声明为准。
+
 ## 🚀 快速开始
 
 本仓库通过 GitHub Actions 自动编译 H5000M、AP3000M 与 x86 平台的 ImmortalWrt 固件，无需本地搭建编译环境。
