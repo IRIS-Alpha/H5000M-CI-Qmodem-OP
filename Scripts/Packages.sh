@@ -84,6 +84,7 @@ UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 
 # FAN789 插件及其他专用硬件插件
 UPDATE_PACKAGE "luci-app-h5000m-fancontrol" "FAN789/luci-app-h5000m-fancontrol" "main"
+UPDATE_PACKAGE "luci-app-airpi-fancontrol" "LianXia233/luci-app-airpi3000m-fancontrol" "main" "all"
 UPDATE_PACKAGE "luci-app-mt5700m" "LianXia233/luci-app-mt5700m" "main"
 UPDATE_PACKAGE "luci-app-h5000m-netmode" "LianXia233/luci-app-h5000m-netmode" "main"
 
