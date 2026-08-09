@@ -50,6 +50,7 @@ OpenWRT-CI-H5000M/
 │   ├── Handles.sh    # EEPROM 自动注入、HomeProxy 资源预置与各类插件兼容修复
 │   └── Settings.sh   # 默认值、WIFI、主机名等个性化设置
 ├── index.html        # 固件发布落地页
+├── CHANGELOG.md      # 更新日志
 ├── LICENSE
 └── README.md
 ```
@@ -164,5 +165,5 @@ OpenWRT-CI-H5000M/
 
 <br>
 
-> 📅 *文档更新日期：2026年8月*
+> 📅 *文档更新日期：2026年8月9日*
 > 💡 *本说明文档由项目编译配置与社区开源信息整合生成。*
