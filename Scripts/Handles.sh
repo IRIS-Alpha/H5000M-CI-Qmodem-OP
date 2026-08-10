@@ -306,3 +306,36 @@ if [ -d "$AP3000M_EEPROM_DIR" ]; then
 		echo "AP3000M: EEPROM injection failed; continuing!"
 	fi
 fi
+
+# ===== luci-app-online-upgrade：设备身份烙入 + 定制脚本覆盖 =====
+# 1) 将本机构建身份写入固件（/etc/online-upgrade-device），供在线升级插件按机型动态匹配 Release。
+#    发布标签格式为 {配置名}-{源码owner}-{分支}-{日期}（与 WRT-CORE 的 Release 标签完全一致）。
+ONLINE_FILES_DIR="../files"
+mkdir -p "$ONLINE_FILES_DIR/etc"
+case "$WRT_CONFIG" in
+	X86-*) ONLINE_FW_PATTERN='combined-efi.*\.img\.gz' ;;
+	*)     ONLINE_FW_PATTERN='squashfs-sysupgrade\.bin$' ;;
+esac
+cat > "$ONLINE_FILES_DIR/etc/online-upgrade-device" <<EOF
+# 由 H5000M-CI-Qmodem 构建流程自动生成，请勿手动修改
+WRT_CONFIG=$WRT_CONFIG
+WRT_INFO=$WRT_INFO
+WRT_BRANCH=$WRT_BRANCH
+WRT_TAG=$WRT_CONFIG-$WRT_INFO-$WRT_BRANCH-$WRT_DATE
+FIRMWARE_PATTERN='$ONLINE_FW_PATTERN'
+EOF
+echo "online-upgrade: device identity baked (config=$WRT_CONFIG, pattern=$ONLINE_FW_PATTERN)"
+
+# 2) 用本仓库定制版脚本/默认值覆盖上游插件，实现按机型自动匹配 Release。
+ONLINE_PATCH_DIR="$GITHUB_WORKSPACE/Scripts/online-upgrade"
+ONLINE_PLUGIN_DIR="./luci-app-online-upgrade"
+if [ -d "$ONLINE_PLUGIN_DIR" ] && [ -d "$ONLINE_PATCH_DIR" ]; then
+	if [ -f "$ONLINE_PATCH_DIR/online-upgrade.sh" ]; then
+		cp -f "$ONLINE_PATCH_DIR/online-upgrade.sh" "$ONLINE_PLUGIN_DIR/root/usr/bin/online-upgrade.sh"
+		echo "online-upgrade: script patched"
+	fi
+	if [ -f "$ONLINE_PATCH_DIR/99-online-upgrade" ]; then
+		cp -f "$ONLINE_PATCH_DIR/99-online-upgrade" "$ONLINE_PLUGIN_DIR/root/etc/uci-defaults/99-online-upgrade"
+		echo "online-upgrade: uci-defaults patched"
+	fi
+fi

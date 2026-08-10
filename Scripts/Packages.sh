@@ -88,6 +88,10 @@ UPDATE_PACKAGE "luci-app-airpi-fancontrol" "LianXia233/luci-app-airpi3000m-fanco
 UPDATE_PACKAGE "luci-app-mt5700m" "LianXia233/luci-app-mt5700m" "main"
 UPDATE_PACKAGE "luci-app-h5000m-netmode" "LianXia233/luci-app-h5000m-netmode" "main"
 
+# 在线升级插件：从 GitHub Releases 按本机实际刷入的固件版本/类型自动匹配更新包
+# 具体脚本与默认值在 Scripts/online-upgrade/ 中按本仓库需求定制（构建时覆盖上游）
+UPDATE_PACKAGE "luci-app-online-upgrade" "gooyjq/luci-app-online-upgrade" "main"
+
 #更新软件包版本
 UPDATE_VERSION() {
 	local PKG_NAME=$1
