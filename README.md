@@ -159,7 +159,7 @@ OpenWRT-CI-H5000M/
 - **🔍 按机型自动匹配**：固件在构建时会把本机身份（机型 + QModem 前端类型 + 构建标签）烙入 `/etc/online-upgrade-device`。插件运行时据此动态解析本仓库对应配置的最新 Release，自动挑选出匹配当前设备的固件包，**不会下错型号/前端**。
 - **🏷️ 精准区分**：Release 标签格式为 `{配置名}-{源码owner}-{分支}-{日期}`（如 `H5000M-qmodem-next-immortalwrt-master-26.08.10-...`）。传统 `H5000M-qmodem` 与 `H5000M-qmodem-next` 通过 `-{源码owner}-` 锚点严格区分，互不错配。
 - **✅ 已是最新判断**：以本机固件对应的构建标签与最新 Release 标签比对，一致即提示已是最新；有新构建才提示升级。
-- **💾 保留配置升级**：一键升级默认保留系统配置（`keep_config`），升级前自动备份、升级后自动恢复；并内置 GitHub 下载加速代理（`ghfast.top`）。
+- **💾 保留配置升级**：一键升级默认保留系统配置（`keep_config`），升级前自动备份、升级后自动恢复；并内置 GitHub 下载加速代理（`gh.acg2.mom`）。
 
 > 默认仓库指向本仓库 `LianXia233/H5000M-CI-Qmodem`。如需改用其它仓库/代理，可在 LuCI 页面或 UCI（`/etc/config/online-upgrade`）中修改 `repo` / `proxy` / `tag`（`tag` 留空即走自动匹配）。
 

@@ -7,7 +7,7 @@ uci -q batch <<-EOF
 	set online-upgrade.settings.enabled='1'
 	set online-upgrade.settings.repo='LianXia233/H5000M-CI-Qmodem'
 	set online-upgrade.settings.tag=''
-	set online-upgrade.settings.proxy='https://ghfast.top/'
+	set online-upgrade.settings.proxy='https://gh.acg2.mom/'
 	set online-upgrade.settings.firmware_pattern='squashfs-sysupgrade\.bin$'
 	set online-upgrade.settings.keep_config='1'
 	set online-upgrade.settings.last_upgrade_version='0'

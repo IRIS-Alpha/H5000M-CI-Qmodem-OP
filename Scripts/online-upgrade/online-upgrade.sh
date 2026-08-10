@@ -25,7 +25,7 @@ FW_PATTERN="$(get_uci firmware_pattern)"
 KEEP_CONFIG="$(get_uci keep_config)"
 
 [ -z "$REPO" ] && REPO="LianXia233/H5000M-CI-Qmodem"
-[ -z "$PROXY" ] && PROXY="https://ghfast.top/"
+[ -z "$PROXY" ] && PROXY="https://gh.acg2.mom/"
 [ -z "$FW_PATTERN" ] && FW_PATTERN="squashfs-sysupgrade\.bin$"
 
 # ===== 设备身份信息（由 H5000M-CI-Qmodem 构建流程烙入固件 /etc/online-upgrade-device）=====
