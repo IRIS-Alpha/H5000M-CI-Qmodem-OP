@@ -314,7 +314,7 @@ ONLINE_FILES_DIR="../files"
 mkdir -p "$ONLINE_FILES_DIR/etc"
 case "$WRT_CONFIG" in
 	X86-*) ONLINE_FW_PATTERN='combined-efi.*\.img\.gz' ;;
-	*)     ONLINE_FW_PATTERN='squashfs-sysupgrade\.bin$' ;;
+	*)     ONLINE_FW_PATTERN='squashfs-sysupgrade.*\.bin$' ;;
 esac
 cat > "$ONLINE_FILES_DIR/etc/online-upgrade-device" <<EOF
 # 由 H5000M-CI-Qmodem 构建流程自动生成，请勿手动修改
@@ -337,5 +337,11 @@ if [ -d "$ONLINE_PLUGIN_DIR" ] && [ -d "$ONLINE_PATCH_DIR" ]; then
 	if [ -f "$ONLINE_PATCH_DIR/99-online-upgrade" ]; then
 		cp -f "$ONLINE_PATCH_DIR/99-online-upgrade" "$ONLINE_PLUGIN_DIR/root/etc/uci-defaults/99-online-upgrade"
 		echo "online-upgrade: uci-defaults patched"
+	fi
+
+	# 3) 修复前端 JS：从 UCI 读取实际配置，不再显示硬编码默认值
+	ONLINE_FRONTEND_JS="$ONLINE_PLUGIN_DIR/htdocs/luci-static/resources/view/system/online-upgrade.js"
+	if [ -f "$ONLINE_FRONTEND_JS" ] && [ -f "$ONLINE_PATCH_DIR/fix-frontend.py" ]; then
+		python3 "$ONLINE_PATCH_DIR/fix-frontend.py" "$ONLINE_FRONTEND_JS"
 	fi
 fi
