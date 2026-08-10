@@ -196,8 +196,8 @@ if [ "$AUTO_MODE" = "1" ]; then
 		PREFIX="${CONFIG_NAME}-"
 	fi
 	# 标签含 YY.MM.DD-HH.MM.SS（定宽），字典序即时间序，取最大者即为最新
-	RESOLVED_TAG=$(grep -o "\"tag_name\":\"${PREFIX}[^\"]*\"" "$LIST_JSON" \
-		| sed 's/.*:"//; s/"$//' | sort | tail -1)
+	RESOLVED_TAG=$(grep -o '"tag_name": *"'${PREFIX}'[^"]*"' "$LIST_JSON" \
+		| sed 's/.*"tag_name": *"//; s/"$//' | sort | tail -1)
 	if [ -z "$RESOLVED_TAG" ]; then
 		echo "错误：未找到匹配本机（${CONFIG_NAME}）的 Release"
 		rm -f "$LIST_JSON"
@@ -228,7 +228,7 @@ fi
 # ===== 查找固件 =====
 echo ""
 echo "[2/2] 正在查找最新固件..."
-FILE_NAMES=$(cat "$TMP_JSON" | jsonfilter -e "@.assets[*].name")
+FILE_NAMES=$(grep -o '"name": *"[^"]*"' "$TMP_JSON" | sed 's/.*"name": *"//; s/"$//')
 FILE_NAME=$(echo "$FILE_NAMES" | grep -E "$FW_PATTERN" | head -1)
 if [ -z "$FILE_NAME" ]; then
 	FILE_NAME=$(echo "$FILE_NAMES" | grep -E "combined.*\.img\.gz$" | head -1)
@@ -239,10 +239,12 @@ if [ -z "$FILE_NAME" ]; then
 	exit 1
 fi
 
-ASSET_UPDATED=$(cat "$TMP_JSON" | jsonfilter -e "@.assets[@.name=\"${FILE_NAME}\"].updated_at")
+# 提取 asset 信息（用 grep 替代有 bug 的 jsonfilter）
+ASSET_BLOCK=$(grep -B2 -A40 '"name": *"'"${FILE_NAME}"'"' "$TMP_JSON")
+ASSET_UPDATED=$(echo "$ASSET_BLOCK" | grep -o '"updated_at": *"[^"]*"' | sed 's/.*"updated_at": *"//; s/"$//')
 ASSET_UPDATED_LOCAL=$(utc_to_local "$ASSET_UPDATED")
-ASSET_SIZE=$(cat "$TMP_JSON" | jsonfilter -e "@.assets[@.name=\"${FILE_NAME}\"].size")
-DOWNLOAD_URL=$(cat "$TMP_JSON" | jsonfilter -e "@.assets[@.name=\"${FILE_NAME}\"].browser_download_url")
+ASSET_SIZE=$(echo "$ASSET_BLOCK" | grep -o '"size": *[0-9]*' | sed 's/.*"size": *//')
+DOWNLOAD_URL=$(echo "$ASSET_BLOCK" | grep -o '"browser_download_url": *"[^"]*"' | sed 's/.*"browser_download_url": *"//; s/"$//')
 
 # 提取版本号（从固件文件名）
 FW_VERSION_RELEASE=$(extract_fw_version "$FILE_NAME")
