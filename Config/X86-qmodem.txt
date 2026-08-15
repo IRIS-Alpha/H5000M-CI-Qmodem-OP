@@ -111,4 +111,7 @@ CONFIG_PACKAGE_kmod-nf-nathelper=y
 CONFIG_PACKAGE_kmod-nf-nathelper-extra=y
 
 # 应用插件
-CONFIG_PACKAGE_luci-app-dockerman=y
+# dockerd（feeds/packages）在 immortalwrt master 于 2026-08-14 引入回归：
+# hack/make.sh binary 复制嵌套可执行文件时路径为空 -> cp: cannot stat '' -> 编译失败。
+# 暂不编译 docker，待 feeds 修复后改回 =y 即可恢复。
+CONFIG_PACKAGE_luci-app-dockerman=n
