@@ -199,6 +199,21 @@ if [ -n "$HP_DIR" ]; then
 	fi
 fi
 
+#修复homeproxy ucode兼容性问题
+# update_subscriptions.uc: luci.sys.init_action不存在 → system()调用
+# generate_client.uc: math.isnan不存在 → type() === 'double'
+HP_SCRIPTS="$HP_DIR/root/etc/homeproxy/scripts"
+HP_FIXES="$GITHUB_WORKSPACE/Scripts/homeproxy"
+if [ -n "$HP_DIR" ] && [ -d "$HP_SCRIPTS" ] && [ -d "$HP_FIXES" ]; then
+	echo " "
+	if cp -f "$HP_FIXES/update_subscriptions.uc" "$HP_SCRIPTS/" && \
+	   cp -f "$HP_FIXES/generate_client.uc" "$HP_SCRIPTS/"; then
+		echo "homeproxy ucode compatibility fixes applied!"
+	else
+		echo "homeproxy ucode fix failed; continuing!"
+	fi
+fi
+
 #修改argon主题字体和颜色
 if [ -d "$PKG_PATH/luci-theme-argon" ]; then
 	echo " "
@@ -257,35 +272,9 @@ if [ -f "$RUST_FILE" ]; then
 	fi
 fi
 
-#修复Linux 6.18.40+的ovpn-dco recvmsg接口兼容性
-OVPN_DIR="$(find "$FEEDS_PACKAGES" -maxdepth 3 -type d -wholename '*/ovpn-dco' -print -quit 2>/dev/null)"
-if [ -n "$OVPN_DIR" ] && ! grep -q 'OVPN_PROTO_RECVMSG_HAS_ADDR_LEN' "$OVPN_DIR/linux-compat.h" 2>/dev/null; then
-	echo " "
-	mkdir -p "$OVPN_DIR/patches"
-	cat > "$OVPN_DIR/patches/0002-fix-recvmsg-addr-len-6.18.40.patch" <<'EOF'
---- a/linux-compat.h
-+++ b/linux-compat.h
-@@ -57,0 +58,11 @@
-+/*
-+ * proto::recvmsg lost the noblock argument in v5.19 and lost the addr_len
-+ * argument in v7.1. The addr_len removal was also backported to 6.18.y
-+ * starting with v6.18.40 (gregkh/linux@073d957).
-+ */
-+#define OVPN_PROTO_RECVMSG_HAS_ADDR_LEN \
-+        (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 19, 0) && \
-+         LINUX_VERSION_CODE < KERNEL_VERSION(7, 1, 0) && \
-+         !(LINUX_VERSION_CODE >= KERNEL_VERSION(6, 18, 40) && \
-+           LINUX_VERSION_CODE < KERNEL_VERSION(6, 19, 0)))
-+
- #include <linux/if_link.h>
---- a/drivers/net/ovpn/tcp.c
-+++ b/drivers/net/ovpn/tcp.c
-@@ -166 +177 @@
--#elif LINUX_VERSION_CODE < KERNEL_VERSION(7, 1, 0)
-+#elif OVPN_PROTO_RECVMSG_HAS_ADDR_LEN
-EOF
-	echo "ovpn-dco has been fixed!"
-fi
+# ovpn-dco recvmsg 兼容性说明：上游 ovpn-backports 7.1.0.2026080300 已内置
+# OVPN_PROTO_RECVMSG_HAS_ADDR_LEN 修复（linux-compat.h + tcp.c），
+# 不再需要注入 0002 补丁（注入反而会导致 patch hunk 失败）。
 
 # AP3000M EEPROM 模板注入 (MT7981 + MT7976 DBDC 开源驱动)
 # 将备份的 EEPROM 模板（含原厂校准数据）和首次启动初始化脚本注入固件
@@ -304,5 +293,44 @@ if [ -d "$AP3000M_EEPROM_DIR" ]; then
 		echo "AP3000M: EEPROM template and init script has been injected!"
 	else
 		echo "AP3000M: EEPROM injection failed; continuing!"
+	fi
+fi
+
+# ===== luci-app-online-upgrade：设备身份烙入 + 定制脚本覆盖 =====
+# 1) 将本机构建身份写入固件（/etc/online-upgrade-device），供在线升级插件按机型动态匹配 Release。
+#    发布标签格式为 {配置名}-{源码owner}-{分支}-{日期}（与 WRT-CORE 的 Release 标签完全一致）。
+ONLINE_FILES_DIR="../files"
+mkdir -p "$ONLINE_FILES_DIR/etc"
+case "$WRT_CONFIG" in
+	X86-*) ONLINE_FW_PATTERN='combined-efi.*\.img\.gz' ;;
+	*)     ONLINE_FW_PATTERN='squashfs-sysupgrade.*\.bin$' ;;
+esac
+cat > "$ONLINE_FILES_DIR/etc/online-upgrade-device" <<EOF
+# 由 H5000M-CI-Qmodem 构建流程自动生成，请勿手动修改
+WRT_CONFIG=$WRT_CONFIG
+WRT_INFO=$WRT_INFO
+WRT_BRANCH=$WRT_BRANCH
+WRT_TAG=$WRT_CONFIG-$WRT_INFO-$WRT_BRANCH-$WRT_DATE
+FIRMWARE_PATTERN='$ONLINE_FW_PATTERN'
+EOF
+echo "online-upgrade: device identity baked (config=$WRT_CONFIG, pattern=$ONLINE_FW_PATTERN)"
+
+# 2) 用本仓库定制版脚本/默认值覆盖上游插件，实现按机型自动匹配 Release。
+ONLINE_PATCH_DIR="$GITHUB_WORKSPACE/Scripts/online-upgrade"
+ONLINE_PLUGIN_DIR="./luci-app-online-upgrade"
+if [ -d "$ONLINE_PLUGIN_DIR" ] && [ -d "$ONLINE_PATCH_DIR" ]; then
+	if [ -f "$ONLINE_PATCH_DIR/online-upgrade.sh" ]; then
+		cp -f "$ONLINE_PATCH_DIR/online-upgrade.sh" "$ONLINE_PLUGIN_DIR/root/usr/bin/online-upgrade.sh"
+		echo "online-upgrade: script patched"
+	fi
+	if [ -f "$ONLINE_PATCH_DIR/99-online-upgrade" ]; then
+		cp -f "$ONLINE_PATCH_DIR/99-online-upgrade" "$ONLINE_PLUGIN_DIR/root/etc/uci-defaults/99-online-upgrade"
+		echo "online-upgrade: uci-defaults patched"
+	fi
+
+	# 3) 修复前端 JS：从 UCI 读取实际配置，不再显示硬编码默认值
+	ONLINE_FRONTEND_JS="$ONLINE_PLUGIN_DIR/htdocs/luci-static/resources/view/system/online-upgrade.js"
+	if [ -f "$ONLINE_FRONTEND_JS" ] && [ -f "$ONLINE_PATCH_DIR/fix-frontend.py" ]; then
+		python3 "$ONLINE_PATCH_DIR/fix-frontend.py" "$ONLINE_FRONTEND_JS"
 	fi
 fi

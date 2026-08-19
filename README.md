@@ -100,6 +100,7 @@ OpenWRT-CI-H5000M/
 │   ├── Handles.sh    # EEPROM 自动注入、HomeProxy 资源预置与各类插件兼容修复
 │   └── Settings.sh   # 默认值、WIFI、主机名等个性化设置
 ├── index.html        # 固件发布落地页
+├── CHANGELOG.md      # 更新日志
 ├── LICENSE
 └── README.md
 ```
@@ -201,6 +202,17 @@ OpenWRT-CI-H5000M/
 * **🧬 依赖策略**：Next 配置依赖 `qmodem` 核心脚本及 `sms-forwarder-next`；传统配置使用 `luci-i18n-qmodem-zh-cn`。核心脚本会带入 `ubus-at-daemon`、`tom_modem`、`modem_scan` 与 `sms-tool_q` 等依赖。两种配置均显式保留 `quectel-CM-5G-M` 与 ImmortalWrt 的通用 `kmod-usb-net-qmi-wwan`，并选择通用 QMI 驱动，避免厂商或 NSS 驱动冲突。
 * **⚠️ 使用提示**：本固件还提供 `luci-app-qmodem-generic` 通用界面；它与所选 QModem 前端都通过 QModem 管理模组，建议不要同时执行拨号或 AT 操作。QModem Next 不包含 MWAN、TTL 等旧版可选扩展。
 
+### 5. 固件在线升级（`luci-app-online-upgrade`）
+
+基于 [gooyjq/luci-app-online-upgrade](https://github.com/gooyjq/luci-app-online-upgrade) 定制，**所有机型默认启用**，入口在 LuCI **系统 → 在线升级**。
+
+- **🔍 按机型自动匹配**：固件在构建时会把本机身份（机型 + QModem 前端类型 + 构建标签）烙入 `/etc/online-upgrade-device`。插件运行时据此动态解析本仓库对应配置的最新 Release，自动挑选出匹配当前设备的固件包，**不会下错型号/前端**。
+- **🏷️ 精准区分**：Release 标签格式为 `{配置名}-{源码owner}-{分支}-{日期}`（如 `H5000M-qmodem-next-immortalwrt-master-26.08.10-...`）。传统 `H5000M-qmodem` 与 `H5000M-qmodem-next` 通过 `-{源码owner}-` 锚点严格区分，互不错配。
+- **✅ 已是最新判断**：以本机固件对应的构建标签与最新 Release 标签比对，一致即提示已是最新；有新构建才提示升级。
+- **💾 保留配置升级**：一键升级默认保留系统配置（`keep_config`），升级前自动备份、升级后自动恢复；并内置 GitHub 下载加速代理（`gh.acg2.mom`）。
+
+> 默认仓库指向本仓库 `LianXia233/H5000M-CI-Qmodem`。如需改用其它仓库/代理，可在 LuCI 页面或 UCI（`/etc/config/online-upgrade`）中修改 `repo` / `proxy` / `tag`（`tag` 留空即走自动匹配）。
+
 ---
 
 ## 🛠️ 三、 固件底层组件与扩展支持
@@ -214,5 +226,5 @@ OpenWRT-CI-H5000M/
 
 <br>
 
-> 📅 *文档更新日期：2026年8月*
+> 📅 *文档更新日期：2026年8月9日*
 > 💡 *本说明文档由项目编译配置与社区开源信息整合生成。*

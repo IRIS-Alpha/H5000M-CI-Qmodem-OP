@@ -45,6 +45,9 @@ CONFIG_PACKAGE_luci-app-samba4=y
 CONFIG_PACKAGE_luci-app-upnp=y
 CONFIG_PACKAGE_luci-app-wolultra=y
 
+# 在线升级插件（所有机型启用，按本机固件版本/类型自动匹配 Release）
+CONFIG_PACKAGE_luci-app-online-upgrade=y
+
 # 移除多余插件
 CONFIG_PACKAGE_luci-app-attendedsysupgrade=n
 CONFIG_PACKAGE_luci-app-wol=n

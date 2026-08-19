@@ -72,7 +72,12 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo -E apt -yqq purge firefox
-          sudo -E apt -yqq update
+          # 移除 GitHub runners 预置的 google-chrome apt 源：其镜像偶发哈希不一致
+          # （File has unexpected size / Mirror sync in progress?），会导致 `apt update`
+          # 返回非零并中断整个初始化步骤（Process completed with exit code 100）。
+          sudo rm -f /etc/apt/sources.list.d/google-chrome*.list
+          # 即使个别非必需源临时不可用也不中断初始化（重试一次）
+          sudo -E apt -yqq update || sudo -E apt -yqq update
           sudo -E apt -yqq full-upgrade
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq autoclean

@@ -26,6 +26,8 @@ elif [ -f "$WIFI_SH" ]; then
 elif [ -f "$WIFI_UC" ]; then
 	#修改WIFI名称
 	sed -i "s/ssid='.*'/ssid='$WRT_SSID'/g" $WIFI_UC
+	#修改WIFI加密方式
+	sed -i "s/encryption='none'/encryption='psk2'/g" $WIFI_UC
 	#修改WIFI密码
 	sed -i "s/key='.*'/key='$WRT_WORD'/g" $WIFI_UC
 fi
@@ -35,6 +37,9 @@ CFG_FILE="./package/base-files/files/bin/config_generate"
 sed -i "s/192\.168\.[0-9]*\.[0-9]*/$WRT_IP/g" $CFG_FILE
 #修改默认主机名
 sed -i "s/hostname='.*'/hostname='$WRT_NAME'/g" $CFG_FILE
+#修改默认时区为北京时间
+sed -i "s/timezone='GMT0'/timezone='CST-8'/g" $CFG_FILE
+sed -i "s/zonename='UTC'/zonename='Asia\/Shanghai'/g" $CFG_FILE
 
 #配置文件修改
 echo "CONFIG_PACKAGE_luci=y" >> ./.config
