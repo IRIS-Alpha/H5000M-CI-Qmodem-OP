@@ -1,0 +1,14 @@
+# Local firmware policy.
+# This file is appended after GENERAL.txt by Scripts/Settings.sh and is
+# therefore applied to every workflow that calls WRT-CORE.
+#
+# OpenClash is the only proxy frontend intended for this fork.
+CONFIG_PACKAGE_luci-app-openclash=y
+
+# Do not include alternative proxy frontends or their engines.
+# CONFIG_PACKAGE_luci-app-homeproxy is not set
+# CONFIG_PACKAGE_sing-box is not set
+# CONFIG_PACKAGE_momo is not set
+# CONFIG_PACKAGE_nikki is not set
+# CONFIG_PACKAGE_luci-app-passwall is not set
+# CONFIG_PACKAGE_luci-app-passwall2 is not set
