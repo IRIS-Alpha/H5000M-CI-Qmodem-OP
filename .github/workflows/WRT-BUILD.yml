@@ -27,11 +27,11 @@ on:
         required: true
         type: choice
         options:
-          - immortalwrt/immortalwrt
           - VIKINGYFY/immortalwrt
+          - immortalwrt/immortalwrt
           - chasey-dev/immortalwrt-mt798x-rebase
       BRANCH:
-        description: '源码分支（immortalwrt 用 master，VIKINGYFY 用 main，chasey-dev 用 25.12）'
+        description: '源码分支（VIKINGYFY 用 main / owrt，immortalwrt 用 master，chasey-dev 用 25.12）'
         default: 'master'
         required: true
         type: string

@@ -63,6 +63,9 @@ jobs:
   core:
     name: ${{inputs.WRT_SOURCE}}
     runs-on: ubuntu-latest
+    # 略低于平台 6h 硬上限：触发硬上限会直接杀掉 runner，
+    # 缓存的 post 保存步骤会被整段跳过（见 AP3000M-qmodem 被取消的那次运行）
+    timeout-minutes: 345
     steps:
       - name: Checkout Projects
         uses: actions/checkout@v4
@@ -78,11 +81,11 @@ jobs:
           sudo rm -f /etc/apt/sources.list.d/google-chrome*.list
           # 即使个别非必需源临时不可用也不中断初始化（重试一次）
           sudo -E apt -yqq update || sudo -E apt -yqq update
-          sudo -E apt -yqq full-upgrade
-          sudo -E apt -yqq autoremove --purge
+          # 不做 full-upgrade / autoremove：托管 runner 每次全量升级要数分钟，
+          # 对 OpenWrt 编译没有收益，属于纯耗时项
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
-          sudo -E apt -yqq install dos2unix libfuse-dev
+          sudo -E apt -yqq install dos2unix libfuse-dev ccache
           sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
@@ -173,16 +176,37 @@ jobs:
         run: |
           find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
 
-      - name: Check Caches
+      - name: Check Caches (Toolchain & ccache)
         id: check-cache
         if: env.WRT_TEST != 'true'
         uses: actions/cache@v4
         with:
-          key: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}-${{env.WRT_HASH}}
+          # 编译失败或超时也要保存：工具链（含最耗时的 rust/host）在头 1~2 小时就编好了，
+          # 不保存的话下次依旧从头冷编译，会陷入「超时→无缓存→再超时」的死循环
+          save-always: true
+          # 关键改动：缓存键只绑定「目标平台 + 源码 + 分支」，不再绑定 commit hash。
+          # 上游一有新提交也能通过 restore-keys 回退命中上次编译好的工具链。
+          key: wrt-tc-${{env.WRT_TARGET}}-${{env.WRT_INFO}}-${{env.WRT_BRANCH}}-${{env.WRT_HASH}}
+          restore-keys: |
+            wrt-tc-${{env.WRT_TARGET}}-${{env.WRT_INFO}}-${{env.WRT_BRANCH}}-
           path: |
             ./wrt/.ccache
             ./wrt/staging_dir/host*
             ./wrt/staging_dir/tool*
+
+      - name: Check Caches (Download)
+        if: env.WRT_TEST != 'true'
+        uses: actions/cache@v4
+        with:
+          # 编译失败或超时也要保存：工具链（含最耗时的 rust/host）在头 1~2 小时就编好了，
+          # 不保存的话下次依旧从头冷编译，会陷入「超时→无缓存→再超时」的死循环
+          save-always: true
+          # 下载的源码包与机型无关，按「源码 + 分支」单独缓存，避免多机型各存一份
+          key: wrt-dl-${{env.WRT_INFO}}-${{env.WRT_BRANCH}}-${{env.WRT_HASH}}
+          restore-keys: |
+            wrt-dl-${{env.WRT_INFO}}-${{env.WRT_BRANCH}}-
+          path: |
+            ./wrt/dl
 
       - name: Update Caches
         if: env.WRT_TEST != 'true'
@@ -199,14 +223,9 @@ jobs:
             echo "caches missed!"
           fi
 
-          if [ "${{ steps.check-cache.outputs.cache-hit }}" != 'true' ]; then
-            CACHE_LIST=$(gh cache list --json id --key "$WRT_CONFIG-$WRT_INFO" --jq '.[].id' 2>/dev/null)
-            for CACHE_ID in $CACHE_LIST; do
-              gh cache delete "$CACHE_ID"
-            done
-
-            echo "caches cleanup done!"
-          fi
+          # 不再在 cache miss 时删除历史缓存：
+          # 上面的 restore-keys 正是依赖历史缓存做前缀回退，删掉等于每次都冷启动。
+          # 配额交给 GitHub LRU 自动回收，必要时用 Cache-Clean 手动清理。
 
       - name: Update Feeds
         run: |
@@ -236,9 +255,13 @@ jobs:
             cat "$WRT_CONFIG_FILE" "$GITHUB_WORKSPACE/Config/GENERAL.txt" "$VARIANT_FILE" >> .config
           fi
 
+          # 启用 ccache，把编译缓存落到 ./.ccache（与上面缓存的 path 对应），
+          # 重复编译、仅改配置或插件时可大幅缩短耗时
+          echo "CONFIG_CCACHE=y" >> .config
+
           $GITHUB_WORKSPACE/Scripts/Settings.sh
 
-          make defconfig -j$(nproc) && make clean -j$(nproc)
+          make defconfig && make clean
 
       - name: Download Packages
         if: env.WRT_TEST != 'true'
@@ -247,12 +270,85 @@ jobs:
 
           make download -j$(nproc)
 
+      - name: Prebuild AirPi Rust Binary (AP3000M)
+        # 仅 AP3000M 需要。luci-app-airpi-fancontrol 的守护进程 airpi-fanctl 由 Rust 编写，
+        # 默认路径会让 OpenWrt 从源码构建一整套 rust/host（rustc + cargo + LLVM），约 1.5~3 小时，
+        # 这正是 AP3000M 比同为 filogic 的 H5000M 恒定慢约 2 小时的原因。
+        # 这里照搬上游 LianXia233/luci-app-airpi3000m-fancontrol 的 CI 做法：
+        # 用 runner 自带的 rustup 配合源码树里已构建好的 aarch64 musl 交叉链接器直接 cargo
+        # 交叉编译，再通过 AIRPI_PREBUILT=1 / AIRPI_PREBUILT_BIN 交给包 Makefile，
+        # 从而完全跳过 rust/host 的源码构建。预编译失败会自动回退，不影响固件产出。
+        if: contains(env.WRT_CONFIG, 'AP3000M') && env.WRT_TEST != 'true'
+        run: |
+          cd ./wrt/
+
+          # 用绝对路径：下面的子 shell 会 cd 进 $PKG_DIR/src，相对路径会失效
+          PKG_DIR="$(pwd)/package/luci-app-airpi-fancontrol"
+          PREBUILT_DIR="$(pwd)/airpi-prebuilt"
+
+          if [ ! -f "$PKG_DIR/src/Cargo.toml" ]; then
+            echo "::warning::未找到 $PKG_DIR/src/Cargo.toml，跳过预编译（将由源码构建 rust/host）"
+            exit 0
+          fi
+
+          # 整段放在受保护子 shell 内：任何一步失败都进入 else 回退，
+          # 不会让整个步骤失败（GitHub Actions 的 run 默认遇错即停）
+          if (
+            set -euxo pipefail
+
+            # 确保目标交叉链接器就绪：命中缓存时秒过，冷编译才会真正构建工具链
+            make toolchain/install -j$(nproc)
+
+            LINKER="$(find ./staging_dir -type f -name 'aarch64-*linux-musl-gcc' -perm -111 | head -1)"
+            [ -n "$LINKER" ] || { echo "未找到 aarch64 musl 交叉链接器"; exit 1; }
+
+            # runner 镜像通常自带 rustup，缺失时最小化安装
+            if ! command -v rustup >/dev/null 2>&1; then
+              curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+                | sh -s -- -y --profile minimal --default-toolchain stable
+            fi
+            export PATH="$HOME/.cargo/bin:$PATH"
+            rustup target add aarch64-unknown-linux-musl
+
+            # 用环境变量指定 linker，避免覆盖 runner 已有的 ~/.cargo/config.toml
+            export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER="$LINKER"
+
+            cd "$PKG_DIR/src"
+            cargo build --locked --release --target aarch64-unknown-linux-musl
+
+            mkdir -p "$PREBUILT_DIR"
+            cp -f target/aarch64-unknown-linux-musl/release/airpi-fanctl "$PREBUILT_DIR/airpi-fanctl"
+
+            # 让包走预编译分支，跳过 rust/host 源码构建。
+            # 必须留在受保护子 shell 内：注入失败时（例如上游 Makefile 改了版式、
+            # 锚点 include $(TOPDIR)/rules.mk 找不到）脚本返回非零，会由外层 if
+            # 接管进入回退分支，而不是让整个步骤失败
+            python3 "$GITHUB_WORKSPACE/Scripts/inject_airpi_prebuilt.py" "$PKG_DIR/Makefile"
+          ); then
+            echo "airpi-fanctl 预编译完成，本次将跳过 rust/host 构建"
+          else
+            echo "::warning::airpi-fanctl 预编译失败，回退到源码构建 rust/host（本次编译将额外增加约 1.5~3 小时）"
+            # 清掉半成品：包 Makefile 未带 AIRPI_PREBUILT 标记时仍会走源码构建，
+            # 留着二进制只会占空间并造成状态不一致
+            rm -rf "$PREBUILT_DIR"
+          fi
+
       - name: Compile Firmware
         if: env.WRT_TEST != 'true'
         run: |
           cd ./wrt/
 
-          make -j$(nproc) || make -j1 V=s
+          # 指向被缓存的 .ccache 目录，限制容量并开启压缩，避免占满 10GB 配额
+          export CCACHE_DIR="$(pwd)/.ccache"
+          export CCACHE_MAXSIZE=5G
+          export CCACHE_COMPRESS=true
+          ccache -z 2>/dev/null || true
+
+          # 失败重试必须保持并行：原来的 make -j1 V=s 会退化成单线程，
+          # 一次偶发失败就能把几小时的编译拖过上限被取消
+          make -j$(nproc) || make -j$(nproc) V=s
+
+          ccache -s 2>/dev/null || true
 
       - name: Machine Information
         run: |
