@@ -1,5 +1,16 @@
 # 更新日志
 
+## [2026-09-29]
+
+### 修复
+
+- **`luci-app-h5000m-netmode` 打包失败导致 MTK-AUTO #100 与 OWRT-ALL #76 共 6 个 job 全灭**（`672ae73`）：今日（09-29）两个定时构建的 6 个 job（H5000M / AP3000M / X86 × qmodem / qmodem-next）全部在 `Compile Firmware` 步骤失败，报 `make[3]: *** [feeds/luci/luci.mk:408: bin/packages/<arch>/base/luci-app-h5000m-netmode-1.8.5-r7.apk] Error 2` 与 `Process completed with exit code 2`。与内核、工具链、feeds 拉包无关，根因在插件仓库：`luci-app-h5000m-netmode` 后端重写为 Rust crate 后保留 `src/`（Rust 源码）且**没有 `src/Makefile`**，而 `feeds/luci/luci.mk` 两个分支判定条件不一致——`Build/Compile` 依据 `$(wildcard ${CURDIR}/src/Makefile)`（要求有 Makefile），`Package/.../install` 依据 `$(wildcard ${CURDIR}/src)`（只要目录存在）。于是 Compile 被跳过、`ipkg-install` 目录永不生成，install 阶段却仍执行 `Build/Install/Default`，对顶层没有 Makefile 的构建目录执行 `make ... install`，报 `*** No rule to make target 'install'.  Stop.` 并以 exit code 2 退出（本地复现一致），进而 `package/Makefile:255` → `toplevel.mk:268` 中断整个 `world` 编译。`src/` 由插件 `c68ac211`（2026-09-28）引入，9-27 的 #99 / #75 尚且成功，9-29 是首个带 `src/` 的构建。已在克隆该插件后新增 `FIX_H5000M_NETMODE_SRC` 删除 `src/`：真正被打进包的是 `root/`（预编译 ELF 本就在 `root/usr/sbin/` 下）、`htdocs/` 与 `po/`，产物不受影响；且 buildroot 内没有 Rust 工具链，本来就不该在构建机编译它。
+
+### 变更文件
+
+- `Scripts/Packages.sh` — 新增 `FIX_H5000M_NETMODE_SRC`（克隆 `luci-app-h5000m-netmode` 后移除无 Makefile 的 `src/` 目录）
+- 上游根治：插件仓库 `LianXia233/luci-app-h5000m-netmode` 已补 `src/Makefile`（`94eb1a5`），空 `compile` / `clean` + `install` 拷贝已发布 ELF，两处修复互不冲突，下游 workaround 可保留或移除
+
 ## [2026-09-25]
 
 ### 修复
