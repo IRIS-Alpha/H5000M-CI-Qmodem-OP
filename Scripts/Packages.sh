@@ -155,6 +155,30 @@ fi
 UPDATE_PACKAGE "luci-app-mt5700m" "LianXia233/luci-app-mt5700m" "main"
 UPDATE_PACKAGE "luci-app-h5000m-netmode" "LianXia233/luci-app-h5000m-netmode" "main"
 
+# ===== luci-app-h5000m-netmode 的 src/ 目录清理（2026-09-29 MTK-AUTO #100 全矩阵失败根因）=====
+# 该插件后端已重写为 Rust crate，仓库里保留 src/（Rust 源码），并把预编译的静态 ELF
+# 直接随包发布在 root/usr/sbin 下（见插件 Makefile 顶部注释：buildroot 内没有 Rust 工具链）。
+# 但 feeds/luci/luci.mk 的两个分支判断条件并不一致：
+#   Build/Compile      按 $(wildcard ${CURDIR}/src/Makefile) 判断 —— 需要“有 Makefile”
+#   Package/.../install 按 $(wildcard ${CURDIR}/src)        判断 —— 只要“目录存在”即可
+# 于是 “有 src/ 但没有 src/Makefile” 这个组合会踩坑：Compile 被跳过、ipkg-install 目录
+# 永远不会生成，install 阶段却仍执行 Build/Install/Default，即 make -C $(PKG_BUILD_DIR) install；
+# 该目录顶层没有 Makefile，make 报 “No rule to make target 'install'” 并以 exit code 2 退出，
+# 表现为 luci.mk 末尾 BuildPackage 展开的打包规则报错（luci.mk:408），进而整个 world 编译中断。
+# 证据链：src/ 由插件 2026-09-28 的 c68ac211（rewrite backend as single static Rust ELF）引入，
+# 9-27 的 CI #99 仍成功，9-29 的 #100 是首个带 src/ 的构建，4 个 job 报错行与退出码完全一致。
+# 删除 src/ 不影响产物：真正被打进包的是 root/、htdocs/、po/，二进制本来就已在仓库内预编译好。
+FIX_H5000M_NETMODE_SRC() {
+	local SRC_DIR="./luci-app-h5000m-netmode/src"
+	if [ -d "$SRC_DIR" ]; then
+		rm -rf "$SRC_DIR"
+		echo "h5000m-netmode: 移除无 Makefile 的 src/（否则 luci.mk install 分支会误走 Build/Install/Default）"
+	else
+		echo "h5000m-netmode: 无 src/ 目录，跳过"
+	fi
+}
+FIX_H5000M_NETMODE_SRC
+
 # 在线升级插件：从 GitHub Releases 按本机实际刷入的固件版本/类型自动匹配更新包
 # 具体脚本与默认值在 Scripts/online-upgrade/ 中按本仓库需求定制（构建时覆盖上游）
 UPDATE_PACKAGE "luci-app-online-upgrade" "gooyjq/luci-app-online-upgrade" "main"
