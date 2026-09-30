@@ -4,12 +4,14 @@
 
 ### 新增
 
-- **显式默认配置文件 `Config/OWRT-DEFAULT.txt`**：后台管理地址（`192.168.10.1`）、后台密码提示（无）、Wi-Fi 名称/密钥（`OWRT` / `12345678`）、加密策略（`psk-mixed`，WPA/WPA2 混合）、2.4G 频宽（`40MHz`）、5G 频宽（`160MHz`，AP3000M 硬件上限 80MHz 时构建期自动降级）、国家/地区码（`CN`）等局域网与无线出厂参数统一由该文件管理，修改默认参数只需编辑它，无需改动脚本或工作流。
+- **显式默认配置文件 `Config/OWRT-DEFAULT.txt`**：后台管理地址（`192.168.10.1`）、后台密码提示（无）、Wi-Fi 名称/密钥（`OWRT` / `12345678`）、加密策略（`psk-mixed`，WPA/WPA2 混合）、2.4G 频宽（`40MHz`）、5G 频宽（`160MHz`，AP3000M 硬件上限 80MHz 时构建期自动降级）、国家/地区码（`CN`）、主机名（`OWRT`）、Web 主题（`aurora`）、时区（`CST-8` / `Asia/Shanghai`）等局域网、无线与系统出厂参数统一由该文件管理，修改默认参数只需编辑它，无需改动脚本或工作流
+- **配置文件易用性优化**：`Config/OWRT-DEFAULT.txt` 按「后台管理 / 系统标识 / Wi-Fi 无线 / 国家与时区」分区组织，每个配置项均附作用说明、取值格式、可选项与注意事项，顶部给出自定义方法（直接改文件即可；工作流 `inputs` 显式传入的值优先）与文件规范（UTF-8、LF 行尾、键名规则），用户可直接照注释修改
 
 ### 变更
 
-- `Config/OWRT-DEFAULT.txt` — 新增上述显式默认配置（`WRT_IP` / `WRT_PW` / `WRT_SSID` / `WRT_WORD` / `WIFI_ENCRYPTION` / `WIFI_2G_WIDTH` / `WIFI_5G_WIDTH` / `WIFI_COUNTRY`）
-- `.github/workflows/WRT-CORE.yml` — 新增「Load Default Settings」步骤，从 `Config/OWRT-DEFAULT.txt` 加载默认参数并写入 `GITHUB_ENV`，工作流 `inputs` 显式传入的值优先；修复 `inputs` 中 `WRT_SSID` / `WRT_WORD` 重复定义及误删的 `WRT_REPO` / `WRT_BRANCH` 声明；修复 TEST 分支死代码（`Custom Settings` 中 `WRT_CONFIG` 字符串匹配改为 `WRT_TEST == "true"`）
+- `Config/OWRT-DEFAULT.txt` — 新增上述显式默认配置（`WRT_IP` / `WRT_PW` / `WRT_SSID` / `WRT_WORD` / `WIFI_ENCRYPTION` / `WIFI_2G_WIDTH` / `WIFI_5G_WIDTH` / `WIFI_COUNTRY` / `WRT_NAME` / `WRT_THEME` / `WRT_TIMEZONE` / `WRT_ZONENAME`）
+- `.github/workflows/WRT-CORE.yml` — 新增「Load Default Settings」步骤，从 `Config/OWRT-DEFAULT.txt` 加载全部 12 项默认参数并写入 `GITHUB_ENV`，工作流 `inputs` 显式传入的值优先；`WRT_THEME` / `WRT_NAME` 等 `inputs` 改为可选（未传入时读取配置文件默认值）；修复 `inputs` 中 `WRT_SSID` / `WRT_WORD` 重复定义及误删的 `WRT_REPO` / `WRT_BRANCH` 声明；修复 TEST 分支死代码（`Custom Settings` 中 `WRT_CONFIG` 字符串匹配改为 `WRT_TEST == "true"`）
+- `Scripts/Settings.sh` — 默认时区由配置文件的 `WRT_TIMEZONE` / `WRT_ZONENAME` 驱动（带兜底默认值 `CST-8` / `Asia/Shanghai`）
 - `.github/workflows/MTK-AUTO.yml`、`.github/workflows/OWRT-ALL.yml`、`.github/workflows/WRT-BUILD.yml` — 移除硬编码的 `WRT_SSID` / `WRT_WORD` / `WRT_IP` / `WRT_PW`，改由核心工作流从默认配置文件读取
 - `Scripts/Settings.sh` — 加密策略由配置驱动（`psk-mixed`，MTK 闭源栈自动追加 `+ccmp`）；新增首次启动脚本 `files/etc/uci-defaults/10-wifi-defaults` 生成，强制覆盖国家码、2.4G/5G 频宽（HT40 / HE160，AP3000M 降级 HE80）、SSID、加密与密钥
 - `Scripts/Handles.sh` — HomeProxy 目录查找深度由 `maxdepth 1` 修正为 `2`（viking feed 克隆为 `./packages/luci-app-homeproxy`）；AP3000M EEPROM 注入增加机型门控，仅 `WRT_CONFIG` 含 `AP3000M` 时执行，并按 `WIFI_5G_WIDTH` 驱动 5G 频宽降级；argon 主题与 mini-diskmanager 路径由硬编码改为 `find` 定位
