@@ -11,10 +11,11 @@ on:
         required: true
         type: string
       WRT_THEME:
-        required: true
+        # 可选：未显式传入时从 Config/OWRT-DEFAULT.txt 读取
+        required: false
         type: string
       WRT_NAME:
-        required: true
+        required: false
         type: string
       WRT_IP:
         # 可选：未显式传入时从 Config/OWRT-DEFAULT.txt 读取
@@ -170,13 +171,16 @@ jobs:
           [ -n "${{ inputs.WRT_PW }}" ] && WRT_PW="${{ inputs.WRT_PW }}"
           [ -n "${{ inputs.WRT_SSID }}" ] && WRT_SSID="${{ inputs.WRT_SSID }}"
           [ -n "${{ inputs.WRT_WORD }}" ] && WRT_WORD="${{ inputs.WRT_WORD }}"
+          [ -n "${{ inputs.WRT_NAME }}" ] && WRT_NAME="${{ inputs.WRT_NAME }}"
+          [ -n "${{ inputs.WRT_THEME }}" ] && WRT_THEME="${{ inputs.WRT_THEME }}"
 
           for VAR in WRT_IP WRT_PW WRT_SSID WRT_WORD \
+                     WRT_NAME WRT_THEME WRT_TIMEZONE WRT_ZONENAME \
                      WIFI_ENCRYPTION WIFI_2G_WIDTH WIFI_5G_WIDTH WIFI_COUNTRY; do
             echo "$VAR=${!VAR}" >> $GITHUB_ENV
           done
 
-          echo "Loaded defaults: IP=${WRT_IP} SSID=${WRT_SSID} 2G=${WIFI_2G_WIDTH}MHz 5G=${WIFI_5G_WIDTH}MHz country=${WIFI_COUNTRY} encryption=${WIFI_ENCRYPTION}"
+          echo "Loaded defaults: IP=${WRT_IP} name=${WRT_NAME} theme=${WRT_THEME} SSID=${WRT_SSID} 2G=${WIFI_2G_WIDTH}MHz 5G=${WIFI_5G_WIDTH}MHz country=${WIFI_COUNTRY} encryption=${WIFI_ENCRYPTION} timezone=${WRT_ZONENAME}"
 
       - name: Clone Code
         run: |
