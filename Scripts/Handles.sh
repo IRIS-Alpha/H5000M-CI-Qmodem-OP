@@ -9,7 +9,9 @@ else
 fi
 
 #预置HomeProxy数据
-HP_DIR="$(find "$PKG_PATH" -maxdepth 1 -type d -name '*homeproxy*' -print -quit)"
+# viking feed（VIKINGYFY/packages）克隆为 ./packages/，homeproxy 位于其下
+# ./packages/luci-app-homeproxy，深度为 2，故查找深度需覆盖两级目录
+HP_DIR="$(find "$PKG_PATH" -maxdepth 2 -type d -name '*homeproxy*' -print -quit)"
 if [ -n "$HP_DIR" ]; then
 	echo " "
 
@@ -215,10 +217,11 @@ if [ -n "$HP_DIR" ] && [ -d "$HP_SCRIPTS" ] && [ -d "$HP_FIXES" ]; then
 fi
 
 #修改argon主题字体和颜色
-if [ -d "$PKG_PATH/luci-theme-argon" ]; then
+ARGON_CFG="$(find "$PKG_PATH/luci-theme-argon" -maxdepth 3 -type f -path '*/luci-app-argon-config/root/etc/config/argon' -print -quit 2>/dev/null)"
+if [ -n "$ARGON_CFG" ]; then
 	echo " "
 	if sed -i "s/primary '.*'/primary '#31a1a1'/; s/'0.2'/'0.5'/; s/'none'/'bing'/; s/'600'/'normal'/" \
-		"$PKG_PATH/luci-theme-argon/luci-app-argon-config/root/etc/config/argon"; then
+		"$ARGON_CFG"; then
 		echo "theme-argon has been fixed!"
 	else
 		echo "theme-argon fix failed; continuing!"
@@ -237,10 +240,11 @@ if [ -d "$PKG_PATH/luci-app-aurora-config" ]; then
 fi
 
 #修改mini-diskmanager菜单位置
-if [ -d "$PKG_PATH/luci-app-mini-diskmanager" ]; then
+DISKMAN_JSON="$(find "$PKG_PATH/luci-app-mini-diskmanager" -maxdepth 4 -type f -path '*/luci-app-mini-diskmanager/root/usr/share/luci/menu.d/luci-app-mini-diskmanager.json' -print -quit 2>/dev/null)"
+if [ -n "$DISKMAN_JSON" ]; then
 	echo " "
 	if sed -i "s/services/system/g" \
-		"$PKG_PATH/luci-app-mini-diskmanager/luci-app-mini-diskmanager/root/usr/share/luci/menu.d/luci-app-mini-diskmanager.json"; then
+		"$DISKMAN_JSON"; then
 		echo "mini-diskmanager has been fixed!"
 	else
 		echo "mini-diskmanager fix failed; continuing!"
@@ -279,18 +283,28 @@ fi
 # AP3000M EEPROM 模板注入 (MT7981 + MT7976 DBDC 开源驱动)
 # 将备份的 EEPROM 模板（含原厂校准数据）和首次启动初始化脚本注入固件
 # 解决 eMMC 设备 factory 分区空白导致 mt76 驱动 eeprom load fail 的问题
+# 门控：仅 AP3000M 机型构建时注入，避免 x86 / H5000M 固件误带其校准资产
 AP3000M_EEPROM_DIR="$GITHUB_WORKSPACE/AP3000M-EEPROM"
-if [ -d "$AP3000M_EEPROM_DIR" ]; then
+if [[ "${WRT_CONFIG:-}" == *AP3000M* ]] && [ -d "$AP3000M_EEPROM_DIR" ]; then
 	FILES_DIR="../files"
 	mkdir -p "$FILES_DIR/lib/firmware/mediatek/"
 	mkdir -p "$FILES_DIR/etc/uci-defaults/"
+
+	# 5G 频宽由 Config/OWRT-DEFAULT.txt 的 WIFI_5G_WIDTH 驱动：
+	# AP3000M (MT7981) 硬件上限 80MHz，默认 160MHz 时构建期自动降级为 HE80
+	WIFI_5G_HTMODE="HE80"
+	if [ -n "${WIFI_5G_WIDTH:-}" ] && [ "$WIFI_5G_WIDTH" -le 80 ]; then
+		WIFI_5G_HTMODE="HE${WIFI_5G_WIDTH}"
+	fi
 
 	if cp "$AP3000M_EEPROM_DIR/mt7981_eeprom_mt7976_dbdc.bin" \
 		"$FILES_DIR/lib/firmware/mediatek/mt7981_eeprom_mt7976_dbdc.bin" && \
 	   cp "$AP3000M_EEPROM_DIR/99-ap3000m-eeprom" \
 		"$FILES_DIR/etc/uci-defaults/99-ap3000m-eeprom" && \
+	   sed -i "s/^set wireless.radio1.htmode='.*'/set wireless.radio1.htmode='$WIFI_5G_HTMODE'/" \
+		"$FILES_DIR/etc/uci-defaults/99-ap3000m-eeprom" && \
 	   chmod +x "$FILES_DIR/etc/uci-defaults/99-ap3000m-eeprom"; then
-		echo "AP3000M: EEPROM template and init script has been injected!"
+		echo "AP3000M: EEPROM template and init script has been injected (5G=${WIFI_5G_HTMODE})!"
 	else
 		echo "AP3000M: EEPROM injection failed; continuing!"
 	fi

@@ -1,0 +1,20 @@
+# 显式默认配置：局域网 / 无线等出厂参数
+# 构建时由 WRT-CORE 的 "Load Default Settings" 步骤读取（工作流 inputs 显式传入时优先），
+# 并经 Scripts/Handles.sh 生成首次启动脚本注入固件。修改默认参数只需编辑本文件。
+#
+# 后台管理地址（Web 入口 IPv4）
+WRT_IP=192.168.10.1
+# 后台登录密码提示文本（仅用于 Release 说明展示）；固件默认 root 无密码，
+# ImmortalWrt 首次登录时由 LuCI 引导设置，此处留空即保持无密码
+WRT_PW=无
+# Wi-Fi 默认名称 / 密钥
+WRT_SSID=OWRT
+WRT_WORD=12345678
+# Wi-Fi 加密策略：psk-mixed = WPA/WPA2 混合模式（兼容新老终端）
+WIFI_ENCRYPTION=psk-mixed
+# 2.4G 频宽（MHz）：HT40
+WIFI_2G_WIDTH=40
+# 5G 频宽（MHz）：HE160；AP3000M (MT7981) 硬件上限 80MHz，构建时自动降级为 80
+WIFI_5G_WIDTH=160
+# 国家 / 地区码（决定可用信道与合规频段）
+WIFI_COUNTRY=CN

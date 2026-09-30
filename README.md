@@ -92,7 +92,7 @@
 
 ## ⚙️ 默认出厂配置
 
-首次刷入固件后的默认网络与无线参数如下（可通过工作流环境变量预设，编译时由 `Scripts/Settings.sh` 写入）：
+首次刷入固件后的默认网络与无线参数如下。所有默认值统一由显式配置文件 [`Config/OWRT-DEFAULT.txt`](./Config/OWRT-DEFAULT.txt) 管理，编译时由 `Scripts/Settings.sh` 与 `Scripts/Handles.sh` 注入固件；工作流 `inputs` 显式传入的参数（`WRT_IP` / `WRT_PW` / `WRT_SSID` / `WRT_WORD`）优先于配置文件默认值。修改默认参数只需编辑该配置文件，无需改动脚本或工作流。
 
 | 配置项 | 默认参数值 | 说明 |
 | :--- | :--- | :--- |
@@ -158,6 +158,7 @@ OpenWRT-CI-H5000M/
 │   ├── mt7981_eeprom_*.bin     # 预置校准 EEPROM 二进制模板
 │   └── 99-ap3000m-eeprom       # 首次启动写入 factory 分区的初始化脚本
 ├── Config/                     # 模块化 Kconfig 片段
+│   ├── OWRT-DEFAULT.txt        # 显式默认配置：后台地址、Wi-Fi 名称/密钥/频宽/国家等
 │   ├── GENERAL.txt             # 全设备通用内核与基础功能包
 │   ├── QMODEM-NEXT.txt         # QModem Next 前端及依赖链
 │   ├── QMODEM.txt              # 传统 QModem 前端及依赖链

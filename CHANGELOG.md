@@ -1,5 +1,27 @@
 # 更新日志
 
+## [2026-09-30]
+
+### 新增
+
+- **显式默认配置文件 `Config/OWRT-DEFAULT.txt`**：后台管理地址（`192.168.10.1`）、后台密码提示（无）、Wi-Fi 名称/密钥（`OWRT` / `12345678`）、加密策略（`psk-mixed`，WPA/WPA2 混合）、2.4G 频宽（`40MHz`）、5G 频宽（`160MHz`，AP3000M 硬件上限 80MHz 时构建期自动降级）、国家/地区码（`CN`）等局域网与无线出厂参数统一由该文件管理，修改默认参数只需编辑它，无需改动脚本或工作流。
+
+### 变更
+
+- `Config/OWRT-DEFAULT.txt` — 新增上述显式默认配置（`WRT_IP` / `WRT_PW` / `WRT_SSID` / `WRT_WORD` / `WIFI_ENCRYPTION` / `WIFI_2G_WIDTH` / `WIFI_5G_WIDTH` / `WIFI_COUNTRY`）
+- `.github/workflows/WRT-CORE.yml` — 新增「Load Default Settings」步骤，从 `Config/OWRT-DEFAULT.txt` 加载默认参数并写入 `GITHUB_ENV`，工作流 `inputs` 显式传入的值优先；修复 `inputs` 中 `WRT_SSID` / `WRT_WORD` 重复定义及误删的 `WRT_REPO` / `WRT_BRANCH` 声明；修复 TEST 分支死代码（`Custom Settings` 中 `WRT_CONFIG` 字符串匹配改为 `WRT_TEST == "true"`）
+- `.github/workflows/MTK-AUTO.yml`、`.github/workflows/OWRT-ALL.yml`、`.github/workflows/WRT-BUILD.yml` — 移除硬编码的 `WRT_SSID` / `WRT_WORD` / `WRT_IP` / `WRT_PW`，改由核心工作流从默认配置文件读取
+- `Scripts/Settings.sh` — 加密策略由配置驱动（`psk-mixed`，MTK 闭源栈自动追加 `+ccmp`）；新增首次启动脚本 `files/etc/uci-defaults/10-wifi-defaults` 生成，强制覆盖国家码、2.4G/5G 频宽（HT40 / HE160，AP3000M 降级 HE80）、SSID、加密与密钥
+- `Scripts/Handles.sh` — HomeProxy 目录查找深度由 `maxdepth 1` 修正为 `2`（viking feed 克隆为 `./packages/luci-app-homeproxy`）；AP3000M EEPROM 注入增加机型门控，仅 `WRT_CONFIG` 含 `AP3000M` 时执行，并按 `WIFI_5G_WIDTH` 驱动 5G 频宽降级；argon 主题与 mini-diskmanager 路径由硬编码改为 `find` 定位
+- `Config/X86-qmodem-next.txt`、`Config/X86-qmodem.txt` — LF 归一化（移除 CRLF）
+- `.gitattributes` — 追加 `*.py` / `*.uc` 的 LF 强制规则
+
+### 修复
+
+- 调用方工作流传参未声明 input（`WRT_REPO` / `WRT_BRANCH`）与重复 input（`WRT_SSID` / `WRT_WORD`）导致的潜在校验失败
+- HomeProxy 数据预置因查找深度不足而整体跳过（viking feed 结构下实际位于两级子目录）
+- x86 / H5000M 构建误带 AP3000M EEPROM 校准资产
+
 ## [2026-09-29]
 
 ### 修复
