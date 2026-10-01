@@ -176,7 +176,9 @@ jobs:
 
           for VAR in WRT_IP WRT_PW WRT_SSID WRT_WORD \
                      WRT_NAME WRT_THEME WRT_TIMEZONE WRT_ZONENAME \
-                     WIFI_ENCRYPTION WIFI_2G_WIDTH WIFI_5G_WIDTH WIFI_COUNTRY; do
+                     WIFI_ENCRYPTION WIFI_2G_WIDTH WIFI_5G_WIDTH WIFI_COUNTRY \
+                     WRT_SSID_WIFI7 WRT_WORD_WIFI7 \
+                     WIFI_ENCRYPTION_WIFI7 WIFI_2G_WIDTH_WIFI7 WIFI_5G_WIDTH_WIFI7 WIFI_COUNTRY_WIFI7; do
             echo "$VAR=${!VAR}" >> $GITHUB_ENV
           done
 

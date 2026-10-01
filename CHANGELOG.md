@@ -1,5 +1,37 @@
 # 更新日志
 
+## [2026-10-01] 修复 Config/OWRT-DEFAULT.txt 无线默认配置未区分 WiFi6 / WiFi7
+
+### 背景
+
+`Config/OWRT-DEFAULT.txt` 是全系固件「后台地址 / 后台密码 / 主机名 / Wi-Fi 及频宽国家码」
+等默认配置的唯一来源。此前无线部分只有一套默认值，未区分设备 WiFi 世代：AP3000M 为
+WiFi6（802.11ax，MT7981B），H5000M 为 WiFi7（802.11be，MT7986 + MT5700M），两者虽同为
+双频设备（5G 频段上限均为 160MHz），但世代能力不同，htmode 前缀与默认配置应分开管理，
+便于按世代调整加密 / 频宽等策略。
+
+### 变更
+
+- `Config/OWRT-DEFAULT.txt`：无线部分拆分为两节——
+  - WiFi6 默认（无后缀，AP3000M 等 802.11ax）：SSID `OWRT` / 密钥 `12345678`、
+    加密 `psk-mixed`（mixed WPA/WPA2 PSK (CCMP)）、2.4G `40MHz`（HT40）、
+    5G `160MHz`（HE160，AP3000M 硬件上限 80MHz 时构建期自动降级）、国家 `CN`；
+  - WiFi7 默认（`_WIFI7` 后缀，H5000M 等 802.11be）：SSID `OWRT` / 密钥 `12345678`、
+    加密 `psk-mixed`、2.4G `40MHz`（HE40）、5G `160MHz`（EHT160，双频设备
+    5G 上限同为 160MHz，320MHz 仅限 6GHz 频段不启用）、国家 `CN`；
+- `Scripts/Settings.sh`：新增设备 WiFi 世代选择逻辑，`WRT_CONFIG` 含 `H5000M` 时
+  启用 `_WIFI7` 后缀默认值（未填写回退 WiFi6 默认）；htmode 前缀按世代区分——
+  WiFi6 2.4G 用 `HT`、5G 用 `HE`，WiFi7 2.4G 用 `HE`、5G 用 `EHT`；
+  保留 AP3000M（MT7981）5G 频宽 80MHz 自动降级；
+- `.github/workflows/WRT-CORE.yml`：Load Default Settings 步骤导出新增的
+  `WRT_SSID_WIFI7` / `WRT_WORD_WIFI7` / `WIFI_ENCRYPTION_WIFI7` /
+  `WIFI_2G_WIDTH_WIFI7` / `WIFI_5G_WIDTH_WIFI7` / `WIFI_COUNTRY_WIFI7` 默认值；
+- `Scripts/Settings.sh`：修复 `files/etc/uci-defaults/10-wifi-defaults` 生成脚本
+  误用未定义的 `WIFI_SSID` / `WIFI_WORD` 变量（导致 SSID / 密钥注入恒为兜底默认值），
+  改为与配置文件一致的 `WRT_SSID` / `WRT_WORD`；
+- `README.md`：默认参数表按 WiFi6（AP3000M）/ WiFi7（H5000M）分行展示频宽，
+  加密策略描述修正为 `mixed WPA/WPA2 PSK (CCMP)`。
+
 ## [2026-09-30]
 
 ### 新增

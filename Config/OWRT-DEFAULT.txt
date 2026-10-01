@@ -45,6 +45,16 @@ WRT_THEME=aurora
 
 
 # ============================ Wi-Fi 无线 ============================
+# 默认值按设备 WiFi 世代区分：AP3000M 为 WiFi6（802.11ax，MT7981B），
+# H5000M 为 WiFi7（802.11be，MT7986 + MT5700M）。
+# - 无后缀变量为 WiFi6 世代默认值（保持历史兼容）；
+# - _WIFI7 后缀变量为 WiFi7 世代默认值，仅当 Scripts/Settings.sh
+#   识别到 WiFi7 设备（H5000M）时启用，未填写时回退到 WiFi6 默认。
+# - htmode 前缀：2.4G 频宽 WiFi6 用 HT、WiFi7 用 HE；5G 频宽 WiFi6 用
+#   HE、WiFi7 用 EHT（802.11be）。320MHz 仅限 6GHz 频段（802.11be
+#   特性），H5000M 为 2.4G/5G 双频设备，5G 频段上限同为 160MHz。
+
+# ---- 无线（WiFi6 默认 · AP3000M 等 802.11ax 设备）----
 # Wi-Fi 默认名称（SSID），2.4G 与 5G 统一使用
 # 长度 1~32 字符，建议使用字母与数字，避免中文与特殊符号
 WRT_SSID=OWRT
@@ -55,7 +65,7 @@ WRT_WORD=12345678
 
 # Wi-Fi 加密策略（决定认证方式与终端兼容性）
 # 可选项：
-#   psk-mixed   WPA / WPA2 混合（默认，兼容新老终端）
+#   psk-mixed   mixed WPA/WPA2 PSK (CCMP)（默认，兼容新老终端）
 #   psk2        WPA2-PSK
 #   sae-mixed   WPA3 / WPA2 混合（终端较新时推荐）
 #   sae         WPA3-PSK（纯 WPA3，老终端无法连接）
@@ -71,6 +81,16 @@ WIFI_2G_WIDTH=40
 # 可选项：20 / 40 / 80 / 160
 # 注意：AP3000M（MT7981）硬件上限为 80MHz，配置 160 时构建期会自动降级为 80
 WIFI_5G_WIDTH=160
+
+# ---- 无线（WiFi7 默认 · H5000M 等 802.11be 设备）----
+# 仅当 Scripts/Settings.sh 识别到 WiFi7 设备（H5000M）时启用；
+# 未填写时回退到上方 WiFi6 默认值。
+WRT_SSID_WIFI7=OWRT             # Wi-Fi 名称（2.4G / 5G 共用）
+WRT_WORD_WIFI7=12345678         # Wi-Fi 密钥（密码）
+WIFI_ENCRYPTION_WIFI7=psk-mixed # 加密方式：mixed WPA/WPA2 PSK (CCMP)（psk-mixed）
+WIFI_2G_WIDTH_WIFI7=40          # 2.4G 频宽（MHz），对应 htmode=HE40
+WIFI_5G_WIDTH_WIFI7=160         # 5G 频宽（MHz），对应 htmode=EHT160
+WIFI_COUNTRY_WIFI7=CN           # 国家/地区码
 
 
 # ============================ 国家与时区 ============================

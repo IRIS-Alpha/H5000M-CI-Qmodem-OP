@@ -15,6 +15,19 @@ WIFI_SH=$(find ./target/linux/mediatek/filogic/base-files/etc/uci-defaults/ -typ
 WIFI_UC="./package/network/config/wifi-scripts/files/lib/wifi/mac80211.uc"
 MTWIFI_SH="./package/mtk/applications/mtwifi-cfg/files/mtwifi.sh"
 
+# 设备 WiFi 世代选择：AP3000M 为 WiFi6（802.11ax），H5000M 为 WiFi7（802.11be）。
+# 无线默认值按世代区分（Config/OWRT-DEFAULT.txt 中 *_WIFI7 后缀为 WiFi7 专属默认，
+# 无后缀为 WiFi6 默认，保持历史兼容）；WRT_CONFIG 由工作流按配置名传入，
+# 未知设备一律按 WiFi6 处理。
+if [[ "${WRT_CONFIG:-}" == *H5000M* ]]; then
+	WRT_SSID="${WRT_SSID_WIFI7:-$WRT_SSID}"
+	WRT_WORD="${WRT_WORD_WIFI7:-$WRT_WORD}"
+	WIFI_ENCRYPTION="${WIFI_ENCRYPTION_WIFI7:-$WIFI_ENCRYPTION}"
+	WIFI_COUNTRY="${WIFI_COUNTRY_WIFI7:-$WIFI_COUNTRY}"
+	WIFI_2G_WIDTH="${WIFI_2G_WIDTH_WIFI7:-$WIFI_2G_WIDTH}"
+	WIFI_5G_WIDTH="${WIFI_5G_WIDTH_WIFI7:-$WIFI_5G_WIDTH}"
+fi
+
 # 加密策略默认 psk-mixed（WPA/WPA2 混合，兼容新老终端）；
 # MTK 闭源驱动栈（mtwifi）的 UCI 加密值需追加 +ccmp 后缀
 WIFI_ENCRYPTION_UCI="${WIFI_ENCRYPTION:-psk-mixed}"
@@ -43,8 +56,15 @@ fi
 # ===== 出厂无线默认参数（国家 / 频宽 / 加密）=====
 # 由 Config/OWRT-DEFAULT.txt 驱动，生成首次启动脚本强制覆盖各驱动栈默认值，
 # 保证 2.4G / 5G 频宽、国家码与加密策略出参一致。
-WIFI_2G_HTMODE="HT${WIFI_2G_WIDTH:-40}"
-WIFI_5G_HTMODE="HE${WIFI_5G_WIDTH:-160}"
+# htmode 前缀按世代区分：WiFi6（802.11ax）2.4G 用 HT、5G 用 HE；
+# WiFi7（802.11be）2.4G 用 HE、5G 用 EHT。
+if [[ "${WRT_CONFIG:-}" == *H5000M* ]]; then
+	WIFI_2G_HTMODE="HE${WIFI_2G_WIDTH:-40}"
+	WIFI_5G_HTMODE="EHT${WIFI_5G_WIDTH:-160}"
+else
+	WIFI_2G_HTMODE="HT${WIFI_2G_WIDTH:-40}"
+	WIFI_5G_HTMODE="HE${WIFI_5G_WIDTH:-160}"
+fi
 if [[ "${WRT_CONFIG:-}" == *AP3000M* ]] && [ "${WIFI_5G_WIDTH:-160}" -gt 80 ]; then
 	echo "AP3000M: 5G 频宽由 ${WIFI_5G_WIDTH}MHz 自动降级为 80MHz（MT7981 硬件上限）"
 	WIFI_5G_HTMODE="HE80"
@@ -56,8 +76,8 @@ cat > "$WIFI_DEFAULTS_DIR/10-wifi-defaults" <<EOF
 #!/bin/sh
 # SPDX-License-Identifier: MIT
 # 出厂默认无线参数：构建时由 Scripts/Settings.sh 依据 Config/OWRT-DEFAULT.txt 生成
-WIFI_SSID='${WIFI_SSID:-OWRT}'
-WIFI_KEY='${WIFI_WORD:-12345678}'
+WIFI_SSID='${WRT_SSID:-OWRT}'
+WIFI_KEY='${WRT_WORD:-12345678}'
 WIFI_ENCRYPTION='$WIFI_ENCRYPTION_UCI'
 WIFI_2G_WIDTH='$WIFI_2G_HTMODE'
 WIFI_5G_WIDTH='$WIFI_5G_HTMODE'
