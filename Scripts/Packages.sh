@@ -119,6 +119,29 @@ UPDATE_PACKAGE "luci-app-qmodem-generic" "LianXia233/luci-app-qmodem-generic" "m
 UPDATE_PACKAGE "quickfile" "sbwml/luci-app-quickfile" "main"
 UPDATE_PACKAGE "timecontrol" "sirpdboy/luci-app-timecontrol" "main"
 UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "axonhub gecoosac sing-box luci-app-homeproxy luci-app-timewol luci-app-wolplus luci-app-wolultra"
+
+# ===== sing-box 过时补丁清理（2026-09-24 MTK-AUTO / OWRT-ALL 同时失败根因）=====
+# VIKINGYFY/packages 的 sing-box 自带 patches/100-fix-dns-tcp-close.patch，它是针对
+# 旧版 sing-box 的反向移植（引入上游从未合入的 HandleStreamDNSConnection）。当 feed 把
+# sing-box 升到 1.15.0_alpha8 后，该补丁上下文已与上游源码（仍是 HandleStreamDNSRequest）
+# 不匹配，OpenWrt 在 Build/Prepare 阶段应用补丁报 “Patch failed!” 并 Error 1，
+# 进而令整个固件编译中断（今日 MTK-AUTO 与 OWRT-ALL 两个定时构建同时失败即此因）。
+# 上游 immortalwrt/packages 的 sing-box 根本不携带该补丁也能正常构建，故这里在补丁确为
+# 旧版（内容含 HandleStreamDNSConnection）时移除它，恢复构建。若 VIKINGYFY 后续刷新该补丁
+# 为适配新源码的版本，本规则因标记不匹配而自动跳过，不会误删新版补丁。
+FIX_SINGBOX_STALE_PATCH() {
+	local PATCH="./packages/sing-box/patches/100-fix-dns-tcp-close.patch"
+	[ -f "$PATCH" ] || { echo "sing-box: 无 100-fix-dns-tcp-close.patch，跳过"; return 0; }
+	# 仅当补丁仍为旧版（引入未合入上游的 HandleStreamDNSConnection）时才移除
+	if grep -q "HandleStreamDNSConnection" "$PATCH"; then
+		rm -f "$PATCH"
+		echo "sing-box: 移除过时补丁 100-fix-dns-tcp-close.patch（与 1.15.0_alpha8 源码不匹配）"
+	else
+		echo "sing-box: 100-fix-dns-tcp-close.patch 已非旧版，保留"
+	fi
+}
+FIX_SINGBOX_STALE_PATCH
+
 UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 
 # FAN789 插件及其他专用硬件插件
@@ -131,6 +154,30 @@ if [[ "${WRT_CONFIG:-}" == *AP3000M* ]]; then
 fi
 UPDATE_PACKAGE "luci-app-mt5700m" "LianXia233/luci-app-mt5700m" "main"
 UPDATE_PACKAGE "luci-app-h5000m-netmode" "LianXia233/luci-app-h5000m-netmode" "main"
+
+# ===== luci-app-h5000m-netmode 的 src/ 目录清理（2026-09-29 MTK-AUTO #100 全矩阵失败根因）=====
+# 该插件后端已重写为 Rust crate，仓库里保留 src/（Rust 源码），并把预编译的静态 ELF
+# 直接随包发布在 root/usr/sbin 下（见插件 Makefile 顶部注释：buildroot 内没有 Rust 工具链）。
+# 但 feeds/luci/luci.mk 的两个分支判断条件并不一致：
+#   Build/Compile      按 $(wildcard ${CURDIR}/src/Makefile) 判断 —— 需要“有 Makefile”
+#   Package/.../install 按 $(wildcard ${CURDIR}/src)        判断 —— 只要“目录存在”即可
+# 于是 “有 src/ 但没有 src/Makefile” 这个组合会踩坑：Compile 被跳过、ipkg-install 目录
+# 永远不会生成，install 阶段却仍执行 Build/Install/Default，即 make -C $(PKG_BUILD_DIR) install；
+# 该目录顶层没有 Makefile，make 报 “No rule to make target 'install'” 并以 exit code 2 退出，
+# 表现为 luci.mk 末尾 BuildPackage 展开的打包规则报错（luci.mk:408），进而整个 world 编译中断。
+# 证据链：src/ 由插件 2026-09-28 的 c68ac211（rewrite backend as single static Rust ELF）引入，
+# 9-27 的 CI #99 仍成功，9-29 的 #100 是首个带 src/ 的构建，4 个 job 报错行与退出码完全一致。
+# 删除 src/ 不影响产物：真正被打进包的是 root/、htdocs/、po/，二进制本来就已在仓库内预编译好。
+FIX_H5000M_NETMODE_SRC() {
+	local SRC_DIR="./luci-app-h5000m-netmode/src"
+	if [ -d "$SRC_DIR" ]; then
+		rm -rf "$SRC_DIR"
+		echo "h5000m-netmode: 移除无 Makefile 的 src/（否则 luci.mk install 分支会误走 Build/Install/Default）"
+	else
+		echo "h5000m-netmode: 无 src/ 目录，跳过"
+	fi
+}
+FIX_H5000M_NETMODE_SRC
 
 # 在线升级插件：从 GitHub Releases 按本机实际刷入的固件版本/类型自动匹配更新包
 # 具体脚本与默认值在 Scripts/online-upgrade/ 中按本仓库需求定制（构建时覆盖上游）

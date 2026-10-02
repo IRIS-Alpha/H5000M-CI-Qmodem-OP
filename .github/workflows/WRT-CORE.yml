@@ -11,22 +11,24 @@ on:
         required: true
         type: string
       WRT_THEME:
-        required: true
+        # 可选：未显式传入时从 Config/OWRT-DEFAULT.txt 读取
+        required: false
         type: string
       WRT_NAME:
-        required: true
-        type: string
-      WRT_SSID:
-        required: true
-        type: string
-      WRT_WORD:
-        required: true
+        required: false
         type: string
       WRT_IP:
-        required: true
+        # 可选：未显式传入时从 Config/OWRT-DEFAULT.txt 读取
+        required: false
         type: string
       WRT_PW:
-        required: true
+        required: false
+        type: string
+      WRT_SSID:
+        required: false
+        type: string
+      WRT_WORD:
+        required: false
         type: string
       WRT_REPO:
         required: true
@@ -151,6 +153,37 @@ jobs:
           esac
           echo "WRT_MODEL=$WRT_MODEL" >> $GITHUB_ENV
 
+      - name: Load Default Settings
+        # 局域网 / 无线等出厂参数统一从显式配置文件 Config/OWRT-DEFAULT.txt 读取；
+        # 工作流 inputs 显式传入的值优先于配置文件默认值。
+        run: |
+          DEFAULT_FILE="$GITHUB_WORKSPACE/Config/OWRT-DEFAULT.txt"
+          if [ ! -f "$DEFAULT_FILE" ]; then
+            echo "::error title=Missing default settings::Config/OWRT-DEFAULT.txt not found."
+            exit 1
+          fi
+
+          set -a
+          . "$DEFAULT_FILE"
+          set +a
+
+          [ -n "${{ inputs.WRT_IP }}" ] && WRT_IP="${{ inputs.WRT_IP }}"
+          [ -n "${{ inputs.WRT_PW }}" ] && WRT_PW="${{ inputs.WRT_PW }}"
+          [ -n "${{ inputs.WRT_SSID }}" ] && WRT_SSID="${{ inputs.WRT_SSID }}"
+          [ -n "${{ inputs.WRT_WORD }}" ] && WRT_WORD="${{ inputs.WRT_WORD }}"
+          [ -n "${{ inputs.WRT_NAME }}" ] && WRT_NAME="${{ inputs.WRT_NAME }}"
+          [ -n "${{ inputs.WRT_THEME }}" ] && WRT_THEME="${{ inputs.WRT_THEME }}"
+
+          for VAR in WRT_IP WRT_PW WRT_SSID WRT_WORD \
+                     WRT_NAME WRT_THEME WRT_TIMEZONE WRT_ZONENAME \
+                     WIFI_ENCRYPTION WIFI_2G_WIDTH WIFI_5G_WIDTH WIFI_COUNTRY \
+                     WRT_SSID_WIFI7 WRT_WORD_WIFI7 \
+                     WIFI_ENCRYPTION_WIFI7 WIFI_2G_WIDTH_WIFI7 WIFI_5G_WIDTH_WIFI7 WIFI_COUNTRY_WIFI7; do
+            echo "$VAR=${!VAR}" >> $GITHUB_ENV
+          done
+
+          echo "Loaded defaults: IP=${WRT_IP} name=${WRT_NAME} theme=${WRT_THEME} SSID=${WRT_SSID} 2G=${WIFI_2G_WIDTH}MHz 5G=${WIFI_5G_WIDTH}MHz country=${WIFI_COUNTRY} encryption=${WIFI_ENCRYPTION} timezone=${WRT_ZONENAME}"
+
       - name: Clone Code
         run: |
           if ! git ls-remote --exit-code --heads "$WRT_REPO" "$WRT_BRANCH" >/dev/null; then
@@ -245,7 +278,7 @@ jobs:
         run: |
           cd ./wrt/
 
-          if [[ "${WRT_CONFIG,,}" == *"test"* ]]; then
+          if [[ "$WRT_TEST" == "true" ]]; then
             VARIANT_FILE="$GITHUB_WORKSPACE/Config/QMODEM-NEXT.txt"
             [[ "$WRT_VARIANT" == "qmodem" ]] && VARIANT_FILE="$GITHUB_WORKSPACE/Config/QMODEM.txt"
             cat "$WRT_CONFIG_FILE" "$VARIANT_FILE" >> .config

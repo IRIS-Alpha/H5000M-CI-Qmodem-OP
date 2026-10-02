@@ -1,5 +1,82 @@
 # 更新日志
 
+## [2026-10-01] 修复 Config/OWRT-DEFAULT.txt 无线默认配置未区分 WiFi6 / WiFi7
+
+### 背景
+
+`Config/OWRT-DEFAULT.txt` 是全系固件「后台地址 / 后台密码 / 主机名 / Wi-Fi 及频宽国家码」
+等默认配置的唯一来源。此前无线部分只有一套默认值，未区分设备 WiFi 世代：AP3000M 为
+WiFi6（802.11ax，MT7981B），H5000M 为 WiFi7（802.11be，MT7986 + MT5700M），两者虽同为
+双频设备（5G 频段上限均为 160MHz），但世代能力不同，htmode 前缀与默认配置应分开管理，
+便于按世代调整加密 / 频宽等策略。
+
+### 变更
+
+- `Config/OWRT-DEFAULT.txt`：无线部分拆分为两节——
+  - WiFi6 默认（无后缀，AP3000M 等 802.11ax）：SSID `OWRT` / 密钥 `12345678`、
+    加密 `psk-mixed`（mixed WPA/WPA2 PSK (CCMP)）、2.4G `40MHz`（HT40）、
+    5G `160MHz`（HE160，AP3000M 硬件上限 80MHz 时构建期自动降级）、国家 `CN`；
+  - WiFi7 默认（`_WIFI7` 后缀，H5000M 等 802.11be）：SSID `OWRT` / 密钥 `12345678`、
+    加密 `psk-mixed`、2.4G `40MHz`（HE40）、5G `160MHz`（EHT160，双频设备
+    5G 上限同为 160MHz，320MHz 仅限 6GHz 频段不启用）、国家 `CN`；
+- `Scripts/Settings.sh`：新增设备 WiFi 世代选择逻辑，`WRT_CONFIG` 含 `H5000M` 时
+  启用 `_WIFI7` 后缀默认值（未填写回退 WiFi6 默认）；htmode 前缀按世代区分——
+  WiFi6 2.4G 用 `HT`、5G 用 `HE`，WiFi7 2.4G 用 `HE`、5G 用 `EHT`；
+  保留 AP3000M（MT7981）5G 频宽 80MHz 自动降级；
+- `.github/workflows/WRT-CORE.yml`：Load Default Settings 步骤导出新增的
+  `WRT_SSID_WIFI7` / `WRT_WORD_WIFI7` / `WIFI_ENCRYPTION_WIFI7` /
+  `WIFI_2G_WIDTH_WIFI7` / `WIFI_5G_WIDTH_WIFI7` / `WIFI_COUNTRY_WIFI7` 默认值；
+- `Scripts/Settings.sh`：修复 `files/etc/uci-defaults/10-wifi-defaults` 生成脚本
+  误用未定义的 `WIFI_SSID` / `WIFI_WORD` 变量（导致 SSID / 密钥注入恒为兜底默认值），
+  改为与配置文件一致的 `WRT_SSID` / `WRT_WORD`；
+- `README.md`：默认参数表按 WiFi6（AP3000M）/ WiFi7（H5000M）分行展示频宽，
+  加密策略描述修正为 `mixed WPA/WPA2 PSK (CCMP)`。
+
+## [2026-09-30]
+
+### 新增
+
+- **显式默认配置文件 `Config/OWRT-DEFAULT.txt`**：后台管理地址（`192.168.10.1`）、后台密码提示（无）、Wi-Fi 名称/密钥（`OWRT` / `12345678`）、加密策略（`psk-mixed`，WPA/WPA2 混合）、2.4G 频宽（`40MHz`）、5G 频宽（`160MHz`，AP3000M 硬件上限 80MHz 时构建期自动降级）、国家/地区码（`CN`）、主机名（`OWRT`）、Web 主题（`aurora`）、时区（`CST-8` / `Asia/Shanghai`）等局域网、无线与系统出厂参数统一由该文件管理，修改默认参数只需编辑它，无需改动脚本或工作流
+- **配置文件易用性优化**：`Config/OWRT-DEFAULT.txt` 按「后台管理 / 系统标识 / Wi-Fi 无线 / 国家与时区」分区组织，每个配置项均附作用说明、取值格式、可选项与注意事项，顶部给出自定义方法（直接改文件即可；工作流 `inputs` 显式传入的值优先）与文件规范（UTF-8、LF 行尾、键名规则），用户可直接照注释修改
+
+### 变更
+
+- `Config/OWRT-DEFAULT.txt` — 新增上述显式默认配置（`WRT_IP` / `WRT_PW` / `WRT_SSID` / `WRT_WORD` / `WIFI_ENCRYPTION` / `WIFI_2G_WIDTH` / `WIFI_5G_WIDTH` / `WIFI_COUNTRY` / `WRT_NAME` / `WRT_THEME` / `WRT_TIMEZONE` / `WRT_ZONENAME`）
+- `.github/workflows/WRT-CORE.yml` — 新增「Load Default Settings」步骤，从 `Config/OWRT-DEFAULT.txt` 加载全部 12 项默认参数并写入 `GITHUB_ENV`，工作流 `inputs` 显式传入的值优先；`WRT_THEME` / `WRT_NAME` 等 `inputs` 改为可选（未传入时读取配置文件默认值）；修复 `inputs` 中 `WRT_SSID` / `WRT_WORD` 重复定义及误删的 `WRT_REPO` / `WRT_BRANCH` 声明；修复 TEST 分支死代码（`Custom Settings` 中 `WRT_CONFIG` 字符串匹配改为 `WRT_TEST == "true"`）
+- `Scripts/Settings.sh` — 默认时区由配置文件的 `WRT_TIMEZONE` / `WRT_ZONENAME` 驱动（带兜底默认值 `CST-8` / `Asia/Shanghai`）
+- `.github/workflows/MTK-AUTO.yml`、`.github/workflows/OWRT-ALL.yml`、`.github/workflows/WRT-BUILD.yml` — 移除硬编码的 `WRT_SSID` / `WRT_WORD` / `WRT_IP` / `WRT_PW`，改由核心工作流从默认配置文件读取
+- `Scripts/Settings.sh` — 加密策略由配置驱动（`psk-mixed`，MTK 闭源栈自动追加 `+ccmp`）；新增首次启动脚本 `files/etc/uci-defaults/10-wifi-defaults` 生成，强制覆盖国家码、2.4G/5G 频宽（HT40 / HE160，AP3000M 降级 HE80）、SSID、加密与密钥
+- `Scripts/Handles.sh` — HomeProxy 目录查找深度由 `maxdepth 1` 修正为 `2`（viking feed 克隆为 `./packages/luci-app-homeproxy`）；AP3000M EEPROM 注入增加机型门控，仅 `WRT_CONFIG` 含 `AP3000M` 时执行，并按 `WIFI_5G_WIDTH` 驱动 5G 频宽降级；argon 主题与 mini-diskmanager 路径由硬编码改为 `find` 定位
+- `Config/X86-qmodem-next.txt`、`Config/X86-qmodem.txt` — LF 归一化（移除 CRLF）
+- `.gitattributes` — 追加 `*.py` / `*.uc` 的 LF 强制规则
+
+### 修复
+
+- 调用方工作流传参未声明 input（`WRT_REPO` / `WRT_BRANCH`）与重复 input（`WRT_SSID` / `WRT_WORD`）导致的潜在校验失败
+- HomeProxy 数据预置因查找深度不足而整体跳过（viking feed 结构下实际位于两级子目录）
+- x86 / H5000M 构建误带 AP3000M EEPROM 校准资产
+
+## [2026-09-29]
+
+### 修复
+
+- **`luci-app-h5000m-netmode` 打包失败导致 MTK-AUTO #100 与 OWRT-ALL #76 共 6 个 job 全灭**（`672ae73`）：今日（09-29）两个定时构建的 6 个 job（H5000M / AP3000M / X86 × qmodem / qmodem-next）全部在 `Compile Firmware` 步骤失败，报 `make[3]: *** [feeds/luci/luci.mk:408: bin/packages/<arch>/base/luci-app-h5000m-netmode-1.8.5-r7.apk] Error 2` 与 `Process completed with exit code 2`。与内核、工具链、feeds 拉包无关，根因在插件仓库：`luci-app-h5000m-netmode` 后端重写为 Rust crate 后保留 `src/`（Rust 源码）且**没有 `src/Makefile`**，而 `feeds/luci/luci.mk` 两个分支判定条件不一致——`Build/Compile` 依据 `$(wildcard ${CURDIR}/src/Makefile)`（要求有 Makefile），`Package/.../install` 依据 `$(wildcard ${CURDIR}/src)`（只要目录存在）。于是 Compile 被跳过、`ipkg-install` 目录永不生成，install 阶段却仍执行 `Build/Install/Default`，对顶层没有 Makefile 的构建目录执行 `make ... install`，报 `*** No rule to make target 'install'.  Stop.` 并以 exit code 2 退出（本地复现一致），进而 `package/Makefile:255` → `toplevel.mk:268` 中断整个 `world` 编译。`src/` 由插件 `c68ac211`（2026-09-28）引入，9-27 的 #99 / #75 尚且成功，9-29 是首个带 `src/` 的构建。已在克隆该插件后新增 `FIX_H5000M_NETMODE_SRC` 删除 `src/`：真正被打进包的是 `root/`（预编译 ELF 本就在 `root/usr/sbin/` 下）、`htdocs/` 与 `po/`，产物不受影响；且 buildroot 内没有 Rust 工具链，本来就不该在构建机编译它。
+
+### 变更文件
+
+- `Scripts/Packages.sh` — 新增 `FIX_H5000M_NETMODE_SRC`（克隆 `luci-app-h5000m-netmode` 后移除无 Makefile 的 `src/` 目录）
+- 上游根治：插件仓库 `LianXia233/luci-app-h5000m-netmode` 已补 `src/Makefile`（`94eb1a5`），空 `compile` / `clean` + `install` 拷贝已发布 ELF，两处修复互不冲突，下游 workaround 可保留或移除
+
+## [2026-09-25]
+
+### 修复
+
+- **sing-box 过时补丁导致构建失败**：今日（09-24）OWRT-ALL 与 MTK-AUTO 两个定时构建同时 `failure`，首个失败步骤均为「编译固件」。根因为 `Scripts/Packages.sh` 克隆的 viking feed（`VIKINGYFY/packages`）中 sing-box 自带 `patches/100-fix-dns-tcp-close.patch` 与 `1.15.0_alpha8` 源码上下文不匹配（补丁引入的上游从未合入的 `HandleStreamDNSConnection`，而源码仍是 `HandleStreamDNSRequest`），`Build/Prepare` 阶段应用补丁报 `Patch failed!` 并 `Error 1`，整个固件编译中断。上游 `immortalwrt/packages` 的 sing-box 根本不携带该补丁也能正常构建，故判定为可安全移除的过时补丁。已在克隆 viking feed 后新增 `FIX_SINGBOX_STALE_PATCH`：仅当补丁内容含旧版标记 `HandleStreamDNSConnection` 时移除，若 VIKINGYFY 后续刷新补丁则自动跳过、不误删。
+
+### 变更文件
+
+- `Scripts/Packages.sh` — 新增 `FIX_SINGBOX_STALE_PATCH`（克隆 viking feed 后清理过时 sing-box 补丁）
+
 ## [2026-09-10]
 
 ### 修复
