@@ -1,5 +1,33 @@
 # 更新日志
 
+## [2026-10-04] 修复 qmodem LuCI 前端仍未编译进固件：QModem 移出 package/ 避免 core 包冲突
+
+### 背景
+
+2026-10-03 以 src-link 注册 qmodem feed 后，后端组件（quectel-CM-5G-M 等）已进入固件，
+但 `luci-app-qmodem` / `luci-app-qmodem-next` 等 LuCI 前端包仍在固件 manifest 中缺失。
+根因：`UPDATE_PACKAGE "qmodem"` 仍把克隆目录放在 `package/QModem/`，OpenWrt 主包扫描
+（package/Makefile 的 `builddirs`）先于 feed 注册命中 `package/QModem/application/*`、
+`package/QModem/luci/*` 下的 Makefile，把 `luci-app-qmodem` / `qmodem` / `qmodem-seal`
+等提前注册为 core package；随后 `feeds install` 对同名包报
+`WARNING: Not overriding core package 'luci-app-qmodem'; use -f to force` 并跳过链接，
+`CONFIG_PACKAGE_luci-app-qmodem*` 等符号在 defconfig 阶段被静默丢弃。
+
+### 变更
+
+- `Scripts/Packages.sh`：`REGISTER_QMODEM_FEED` 开头新增目录搬移——若 `package/QModem`
+  存在且工作区根尚无 `QModem`，先 `mv -f ./QModem ../QModem` 把克隆目录移出 `package/`，
+  再以 `src-link qmodem` 注册 feed；`QMODEM_DIR` / `QMODEM_ABS` 同步指向 `../QModem`，
+  使主包扫描不再提前抢注同名包，`feeds install -a -p qmodem` 可正常把所有二级目录包
+  链接到 `package/feeds/qmodem/`；
+- 同步修正 `FIX_QMODEM_VERSION`（`version.mk`）与 `FIX_QMODEM_VOIP_DEP`
+  （`sms_forwarder_next/Makefile`）的路径为 `../QModem/...`。
+
+### 变更文件
+
+- `Scripts/Packages.sh`
+- `CHANGELOG.md`
+
 ## [2026-10-03] 修复 qmodem 未编译进固件：改为 OpenWrt feed（src-link）方式集成
 
 ### 背景
