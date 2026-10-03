@@ -1,5 +1,26 @@
 # 更新日志
 
+## [2026-10-03] WiFi7（H5000M）2.4G 默认频宽世代同步为 WiFi7（BE / EHT）
+
+### 背景
+
+H5000M 为 WiFi7（802.11be，MT7986 + MT5700M）双频设备，硬件支持 BE，但此前 2.4G 默认配置
+沿用了 WiFi6 的 AX，与 5G 的 WiFi7 世代不一致。本次将 H5000M 的 2.4G 默认
+htmode 由 `HE`（802.11ax / AX）同步为 `EHT`（802.11be / BE），使 2.4G / 5G 世代保持一致。
+
+### 变更
+
+- `Config/OWRT-DEFAULT.txt`：WiFi7 2.4G 频宽注释由 `htmode=HE40` 改为 `htmode=EHT40`，
+  顶部 htmode 前缀说明同步为「WiFi7 2.4G / 5G 均用 EHT，2.4G / 5G 按设备 WiFi 世代对齐」；
+- `Scripts/Settings.sh`：H5000M（WiFi7）分支的 2.4G htmode 由 `HE${WIFI_2G_WIDTH}` 改为
+  `EHT${WIFI_2G_WIDTH}`（频宽数值仍取 `WIFI_2G_WIDTH_WIFI7`，默认 40，仅前缀改变）；
+  对应注释同步更新。
+
+### 变更文件
+
+- `Config/OWRT-DEFAULT.txt`
+- `Scripts/Settings.sh`
+
 ## [2026-10-01] 修复 Config/OWRT-DEFAULT.txt 无线默认配置未区分 WiFi6 / WiFi7
 
 ### 背景
