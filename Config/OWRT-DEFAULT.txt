@@ -50,11 +50,10 @@ WRT_THEME=aurora
 # - 无后缀变量为 WiFi6 世代默认值（保持历史兼容）；
 # - _WIFI7 后缀变量为 WiFi7 世代默认值，仅当 Scripts/Settings.sh
 #   识别到 WiFi7 设备（H5000M）时启用，未填写时回退到 WiFi6 默认。
-# - htmode 前缀：2.4G 频宽 WiFi6 用 HT、WiFi7 用 EHT；5G 频宽 WiFi6 用
-#   HE、WiFi7 用 EHT（802.11be）。2.4G / 5G 均按设备 WiFi 世代同步对齐，
-#   即 WiFi7（H5000M）的 2.4G 也使用 BE（EHT）而非 AX（HE）。320MHz 仅限
-#   6GHz 频段（802.11be 特性），H5000M 为 2.4G/5G 双频设备，5G 频段上限
-#   同为 160MHz。
+# - htmode 前缀按设备世代区分：WiFi6（AX）2.4G / 5G 均用 HE、WiFi7（BE）
+#   2.4G / 5G 均用 EHT。2.4G / 5G 均按设备 WiFi 世代同步对齐（同机两个频段
+#   世代一致）。320MHz 仅限 6GHz 频段（802.11be 特性），H5000M 为 2.4G/5G
+#   双频设备，5G 频段上限同为 160MHz。
 
 # ---- 无线（WiFi6 默认 · AP3000M 等 802.11ax 设备）----
 # Wi-Fi 默认名称（SSID），2.4G 与 5G 统一使用
@@ -75,8 +74,8 @@ WRT_WORD=12345678
 #       +ccmp），此处只需填写裸策略名，无需手动拼接
 WIFI_ENCRYPTION=psk-mixed
 
-# 2.4G 频宽（MHz），对应 htmode=HT40
-# 可选项：20 / 40（2.4G 使用 HT 模式；40 吞吐更高，20 抗干扰更强）
+# 2.4G 频宽（MHz），对应 htmode=HE40（WiFi6/AX）
+# 可选项：20 / 40（2.4G 使用 AX（HE）模式；40 吞吐更高，20 抗干扰更强）
 WIFI_2G_WIDTH=40
 
 # 5G 频宽（MHz），对应 htmode=HE160

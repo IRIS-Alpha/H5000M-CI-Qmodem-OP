@@ -1,25 +1,34 @@
 # 更新日志
 
-## [2026-10-03] WiFi7（H5000M）2.4G 默认频宽世代同步为 WiFi7（BE / EHT）
+## [2026-10-03] 无线默认频宽按设备世代区分：AP3000M 走 AX（HE）、H5000M 走 BE（EHT）
 
 ### 背景
 
-H5000M 为 WiFi7（802.11be，MT7986 + MT5700M）双频设备，硬件支持 BE，但此前 2.4G 默认配置
-沿用了 WiFi6 的 AX，与 5G 的 WiFi7 世代不一致。本次将 H5000M 的 2.4G 默认
-htmode 由 `HE`（802.11ax / AX）同步为 `EHT`（802.11be / BE），使 2.4G / 5G 世代保持一致。
+两组设备频宽取值一致（2.4G `40MHz`、5G `160MHz`），但无线世代不同：AP3000M 为
+WiFi6（802.11ax，MT7981B），H5000M 为 WiFi7（802.11be，MT7986 + MT5700M）。
+此前 2.4G 默认频宽未按世代正确区分：H5000M 2.4G 误用 AX（`HE40`），AP3000M 2.4G
+误用 802.11n（`HT40`）。本次统一为「频宽取值相同、htmode 前缀按设备世代区分」——
+AP3000M 2.4G / 5G 均用 `HE`（AX），H5000M 2.4G / 5G 均用 `EHT`（BE），同机两个频段
+世代对齐。
 
 ### 变更
 
-- `Config/OWRT-DEFAULT.txt`：WiFi7 2.4G 频宽注释由 `htmode=HE40` 改为 `htmode=EHT40`，
-  顶部 htmode 前缀说明同步为「WiFi7 2.4G / 5G 均用 EHT，2.4G / 5G 按设备 WiFi 世代对齐」；
-- `Scripts/Settings.sh`：H5000M（WiFi7）分支的 2.4G htmode 由 `HE${WIFI_2G_WIDTH}` 改为
-  `EHT${WIFI_2G_WIDTH}`（频宽数值仍取 `WIFI_2G_WIDTH_WIFI7`，默认 40，仅前缀改变）；
-  对应注释同步更新。
+- `Config/OWRT-DEFAULT.txt`：顶部 htmode 前缀说明改为「WiFi6（AX）2.4G / 5G 均用 HE、
+  WiFi7（BE）2.4G / 5G 均用 EHT」；WiFi6 2.4G 频宽注释由 `htmode=HT40` 改为 `htmode=HE40`
+  （AX），WiFi7 2.4G 频宽注释由 `htmode=HE40` 改为 `htmode=EHT40`（BE）；`WIFI_2G_WIDTH`
+  与 `WIFI_2G_WIDTH_WIFI7` 数值保持 `40`、5G 保持 `160` 不变，仅世代前缀区分；
+- `Scripts/Settings.sh`：设备世代分支的 htmode 映射修正——
+  - WiFi6（非 H5000M）分支：2.4G 由 `HT${WIFI_2G_WIDTH}` 改为 `HE${WIFI_2G_WIDTH}`（AX），
+    5G 保持 `HE${WIFI_5G_WIDTH}`；
+  - WiFi7（H5000M）分支：2.4G 由 `HE${WIFI_2G_WIDTH}` 改为 `EHT${WIFI_2G_WIDTH}`（BE），
+    5G 保持 `EHT${WIFI_5G_WIDTH}`；
+  - 对应注释同步更新。
 
 ### 变更文件
 
 - `Config/OWRT-DEFAULT.txt`
 - `Scripts/Settings.sh`
+- `README.md`
 
 ## [2026-10-01] 修复 Config/OWRT-DEFAULT.txt 无线默认配置未区分 WiFi6 / WiFi7
 
