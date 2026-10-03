@@ -1,5 +1,33 @@
 # 更新日志
 
+## [2026-10-03] 修正 AP3000M 5G 硬件上限：AX 160MHz（移除 80MHz 降级）
+
+### 背景
+
+此前误以为 AP3000M（MT7981，WiFi6）5G 硬件上限为 80MHz，并在构建期默认降级为 `HE80`。
+实际硬件 5G 支持 AX 160MHz。据此移除「160MHz → 80MHz 自动降级」逻辑，默认 160MHz 直接产出
+`HE160`（AX）。
+
+### 变更
+
+- `Config/OWRT-DEFAULT.txt`：顶部「频宽上限」与 `WIFI_5G_WIDTH` 注释由「上限 80MHz、自动降级」
+  改为「AP3000M（MT7981）5G 硬件上限为 160MHz（AX），默认即 160MHz 不降级」；
+- `Scripts/Settings.sh`：删除 AP3000M 的「5G 频宽 >80MHz 时降级为 HE80」分支，WiFi6 分支直接
+  产出 `HE${WIFI_5G_WIDTH}`（默认 HE160），注释同步修正；
+- `Scripts/Handles.sh`：AP3000M EEPROM 注入段的 5G htmode 由「默认 HE80、仅 ≤80MHz 才映射」
+  改为直接映射 `HE${WIFI_5G_WIDTH}`（默认 HE160）；
+- `AP3000M-EEPROM/99-ap3000m-eeprom`：模板默认 `radio1` htmode 由 `HE80` 改为 `HE160`（注入时
+  仍由 Handles.sh 以 `WIFI_5G_WIDTH` 覆盖，此处仅保持模板默认一致）；
+- `README.md`：WiFi6 · AP3000M 频宽行由「硬件上限 80MHz 时自动降级」改为「5G 硬件上限 160MHz」。
+
+### 变更文件
+
+- `Config/OWRT-DEFAULT.txt`
+- `Scripts/Settings.sh`
+- `Scripts/Handles.sh`
+- `AP3000M-EEPROM/99-ap3000m-eeprom`
+- `README.md`
+
 ## [2026-10-03] 无线默认频宽按设备世代区分：AP3000M 走 AX（HE）、H5000M 走 BE（EHT）
 
 ### 背景

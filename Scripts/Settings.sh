@@ -65,10 +65,6 @@ else
 	WIFI_2G_HTMODE="HE${WIFI_2G_WIDTH:-40}"
 	WIFI_5G_HTMODE="HE${WIFI_5G_WIDTH:-160}"
 fi
-if [[ "${WRT_CONFIG:-}" == *AP3000M* ]] && [ "${WIFI_5G_WIDTH:-160}" -gt 80 ]; then
-	echo "AP3000M: 5G 频宽由 ${WIFI_5G_WIDTH}MHz 自动降级为 80MHz（MT7981 硬件上限）"
-	WIFI_5G_HTMODE="HE80"
-fi
 
 WIFI_DEFAULTS_DIR="./files/etc/uci-defaults"
 mkdir -p "$WIFI_DEFAULTS_DIR"

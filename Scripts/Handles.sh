@@ -291,11 +291,8 @@ if [[ "${WRT_CONFIG:-}" == *AP3000M* ]] && [ -d "$AP3000M_EEPROM_DIR" ]; then
 	mkdir -p "$FILES_DIR/etc/uci-defaults/"
 
 	# 5G 频宽由 Config/OWRT-DEFAULT.txt 的 WIFI_5G_WIDTH 驱动：
-	# AP3000M (MT7981) 硬件上限 80MHz，默认 160MHz 时构建期自动降级为 HE80
-	WIFI_5G_HTMODE="HE80"
-	if [ -n "${WIFI_5G_WIDTH:-}" ] && [ "$WIFI_5G_WIDTH" -le 80 ]; then
-		WIFI_5G_HTMODE="HE${WIFI_5G_WIDTH}"
-	fi
+	# AP3000M（MT7981）5G 硬件上限为 160MHz（AX），默认 160MHz，直接映射 HE${WIFI_5G_WIDTH}
+	WIFI_5G_HTMODE="HE${WIFI_5G_WIDTH:-160}"
 
 	if cp "$AP3000M_EEPROM_DIR/mt7981_eeprom_mt7976_dbdc.bin" \
 		"$FILES_DIR/lib/firmware/mediatek/mt7981_eeprom_mt7976_dbdc.bin" && \

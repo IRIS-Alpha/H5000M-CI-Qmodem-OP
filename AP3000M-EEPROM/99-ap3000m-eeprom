@@ -76,7 +76,7 @@ if [ -f "$WIFI_CFG" ] && grep -q "radio1" "$WIFI_CFG" 2>/dev/null; then
 	uci -q batch <<EOF
 set wireless.radio1.band='5g'
 set wireless.radio1.channel='36'
-set wireless.radio1.htmode='HE80'
+set wireless.radio1.htmode='HE160'
 commit wireless
 EOF
 	wifi reload 2>/dev/null &
