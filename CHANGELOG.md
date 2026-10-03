@@ -1,5 +1,88 @@
 # 更新日志
 
+## [2026-10-03] 修复 qmodem 未编译进固件：改为 OpenWrt feed（src-link）方式集成
+
+### 背景
+
+qmodem（FUjr/QModem）此前一直未进入固件。根因：该仓库按 OpenWrt feed（src-git）设计，
+顶层没有 Makefile，包分散在 `application/`、`luci/`、`driver/` 等二级目录；而 Packages.sh
+仅把仓库克隆到 `package/QModem/`，OpenWrt 的包扫描（package/Makefile 的 `builddirs`）
+只认含 Makefile 的一级子目录，导致 `luci-app-qmodem` / `luci-app-qmodem-next` / `qmodem` /
+`sms-forwarder-next` 等配置符号在 defconfig 阶段不存在，配置被静默丢弃。
+
+### 变更
+
+- `Scripts/Packages.sh`：`UPDATE_PACKAGE "qmodem" ...` 克隆后新增 `REGISTER_QMODEM_FEED`，
+  将克隆目录以 `src-link qmodem` 追加进 feeds 配置（`feeds.conf` 优先于 `feeds.conf.default`），
+  再增量执行 `feeds update qmodem && feeds install -a -p qmodem`，由 scripts/feeds 递归
+  扫描二级目录并把各包链接到 `package/feeds/qmodem/`，仅影响 qmodem feed、不动其它 feed；
+- 各包 Makefile 的 `include ../../version.mk` 相对路径在 feed 符号链接布局下仍指向 QModem
+  根目录的 `version.mk`，无需改动；既有的 FIX_QMODEM_VERSION / FIX_QMODEM_VOIP_DEP
+  修改的是克隆目录真实文件，对 feed 链接同样生效。
+
+### 变更文件
+
+- `Scripts/Packages.sh`
+- `CHANGELOG.md`
+
+## [2026-10-03] 修正 AP3000M 5G 硬件上限：AX 160MHz（移除 80MHz 降级）
+
+### 背景
+
+此前误以为 AP3000M（MT7981，WiFi6）5G 硬件上限为 80MHz，并在构建期默认降级为 `HE80`。
+实际硬件 5G 支持 AX 160MHz。据此移除「160MHz → 80MHz 自动降级」逻辑，默认 160MHz 直接产出
+`HE160`（AX）。
+
+### 变更
+
+- `Config/OWRT-DEFAULT.txt`：顶部「频宽上限」与 `WIFI_5G_WIDTH` 注释由「上限 80MHz、自动降级」
+  改为「AP3000M（MT7981）5G 硬件上限为 160MHz（AX），默认即 160MHz 不降级」；
+- `Scripts/Settings.sh`：删除 AP3000M 的「5G 频宽 >80MHz 时降级为 HE80」分支，WiFi6 分支直接
+  产出 `HE${WIFI_5G_WIDTH}`（默认 HE160），注释同步修正；
+- `Scripts/Handles.sh`：AP3000M EEPROM 注入段的 5G htmode 由「默认 HE80、仅 ≤80MHz 才映射」
+  改为直接映射 `HE${WIFI_5G_WIDTH}`（默认 HE160）；
+- `AP3000M-EEPROM/99-ap3000m-eeprom`：模板默认 `radio1` htmode 由 `HE80` 改为 `HE160`（注入时
+  仍由 Handles.sh 以 `WIFI_5G_WIDTH` 覆盖，此处仅保持模板默认一致）；
+- `README.md`：WiFi6 · AP3000M 频宽行由「硬件上限 80MHz 时自动降级」改为「5G 硬件上限 160MHz」。
+
+### 变更文件
+
+- `Config/OWRT-DEFAULT.txt`
+- `Scripts/Settings.sh`
+- `Scripts/Handles.sh`
+- `AP3000M-EEPROM/99-ap3000m-eeprom`
+- `README.md`
+
+## [2026-10-03] 无线默认频宽按设备世代区分：AP3000M 走 AX（HE）、H5000M 走 BE（EHT）
+
+### 背景
+
+两组设备频宽取值一致（2.4G `40MHz`、5G `160MHz`），但无线世代不同：AP3000M 为
+WiFi6（802.11ax，MT7981B），H5000M 为 WiFi7（802.11be，MT7986 + MT5700M）。
+此前 2.4G 默认频宽未按世代正确区分：H5000M 2.4G 误用 AX（`HE40`），AP3000M 2.4G
+误用 802.11n（`HT40`）。本次统一为「频宽取值相同、htmode 前缀按设备世代区分」——
+AP3000M 2.4G / 5G 均用 `HE`（AX），H5000M 2.4G / 5G 均用 `EHT`（BE），同机两个频段
+世代对齐。
+
+### 变更
+
+- `Config/OWRT-DEFAULT.txt`：顶部 htmode 前缀说明改为「WiFi6（AX）2.4G / 5G 均用 HE、
+  WiFi7（BE）2.4G / 5G 均用 EHT」；WiFi6 2.4G 频宽注释由 `htmode=HT40` 改为 `htmode=HE40`
+  （AX），WiFi7 2.4G 频宽注释由 `htmode=HE40` 改为 `htmode=EHT40`（BE）；`WIFI_2G_WIDTH`
+  与 `WIFI_2G_WIDTH_WIFI7` 数值保持 `40`、5G 保持 `160` 不变，仅世代前缀区分；
+- `Scripts/Settings.sh`：设备世代分支的 htmode 映射修正——
+  - WiFi6（非 H5000M）分支：2.4G 由 `HT${WIFI_2G_WIDTH}` 改为 `HE${WIFI_2G_WIDTH}`（AX），
+    5G 保持 `HE${WIFI_5G_WIDTH}`；
+  - WiFi7（H5000M）分支：2.4G 由 `HE${WIFI_2G_WIDTH}` 改为 `EHT${WIFI_2G_WIDTH}`（BE），
+    5G 保持 `EHT${WIFI_5G_WIDTH}`；
+  - 对应注释同步更新。
+
+### 变更文件
+
+- `Config/OWRT-DEFAULT.txt`
+- `Scripts/Settings.sh`
+- `README.md`
+
 ## [2026-10-01] 修复 Config/OWRT-DEFAULT.txt 无线默认配置未区分 WiFi6 / WiFi7
 
 ### 背景

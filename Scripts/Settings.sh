@@ -56,18 +56,14 @@ fi
 # ===== 出厂无线默认参数（国家 / 频宽 / 加密）=====
 # 由 Config/OWRT-DEFAULT.txt 驱动，生成首次启动脚本强制覆盖各驱动栈默认值，
 # 保证 2.4G / 5G 频宽、国家码与加密策略出参一致。
-# htmode 前缀按世代区分：WiFi6（802.11ax）2.4G 用 HT、5G 用 HE；
-# WiFi7（802.11be）2.4G 用 HE、5G 用 EHT。
+# htmode 前缀按世代区分：WiFi6（802.11ax）2.4G / 5G 均用 HE；
+# WiFi7（802.11be）2.4G / 5G 均用 EHT；同机两个频段世代一致。
 if [[ "${WRT_CONFIG:-}" == *H5000M* ]]; then
-	WIFI_2G_HTMODE="HE${WIFI_2G_WIDTH:-40}"
+	WIFI_2G_HTMODE="EHT${WIFI_2G_WIDTH:-40}"
 	WIFI_5G_HTMODE="EHT${WIFI_5G_WIDTH:-160}"
 else
-	WIFI_2G_HTMODE="HT${WIFI_2G_WIDTH:-40}"
+	WIFI_2G_HTMODE="HE${WIFI_2G_WIDTH:-40}"
 	WIFI_5G_HTMODE="HE${WIFI_5G_WIDTH:-160}"
-fi
-if [[ "${WRT_CONFIG:-}" == *AP3000M* ]] && [ "${WIFI_5G_WIDTH:-160}" -gt 80 ]; then
-	echo "AP3000M: 5G 频宽由 ${WIFI_5G_WIDTH}MHz 自动降级为 80MHz（MT7981 硬件上限）"
-	WIFI_5G_HTMODE="HE80"
 fi
 
 WIFI_DEFAULTS_DIR="./files/etc/uci-defaults"
