@@ -1,5 +1,30 @@
 # 更新日志
 
+## [2026-10-03] 修复 qmodem 未编译进固件：改为 OpenWrt feed（src-link）方式集成
+
+### 背景
+
+qmodem（FUjr/QModem）此前一直未进入固件。根因：该仓库按 OpenWrt feed（src-git）设计，
+顶层没有 Makefile，包分散在 `application/`、`luci/`、`driver/` 等二级目录；而 Packages.sh
+仅把仓库克隆到 `package/QModem/`，OpenWrt 的包扫描（package/Makefile 的 `builddirs`）
+只认含 Makefile 的一级子目录，导致 `luci-app-qmodem` / `luci-app-qmodem-next` / `qmodem` /
+`sms-forwarder-next` 等配置符号在 defconfig 阶段不存在，配置被静默丢弃。
+
+### 变更
+
+- `Scripts/Packages.sh`：`UPDATE_PACKAGE "qmodem" ...` 克隆后新增 `REGISTER_QMODEM_FEED`，
+  将克隆目录以 `src-link qmodem` 追加进 feeds 配置（`feeds.conf` 优先于 `feeds.conf.default`），
+  再增量执行 `feeds update qmodem && feeds install -a -p qmodem`，由 scripts/feeds 递归
+  扫描二级目录并把各包链接到 `package/feeds/qmodem/`，仅影响 qmodem feed、不动其它 feed；
+- 各包 Makefile 的 `include ../../version.mk` 相对路径在 feed 符号链接布局下仍指向 QModem
+  根目录的 `version.mk`，无需改动；既有的 FIX_QMODEM_VERSION / FIX_QMODEM_VOIP_DEP
+  修改的是克隆目录真实文件，对 feed 链接同样生效。
+
+### 变更文件
+
+- `Scripts/Packages.sh`
+- `CHANGELOG.md`
+
 ## [2026-10-03] 修正 AP3000M 5G 硬件上限：AX 160MHz（移除 80MHz 降级）
 
 ### 背景

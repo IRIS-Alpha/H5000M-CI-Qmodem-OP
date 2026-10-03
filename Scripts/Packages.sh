@@ -77,6 +77,36 @@ UPDATE_PACKAGE "qbittorrent" "sbwml/luci-app-qbittorrent" "master" "" "qt6base q
 # qmodem-next 使用此核心脚本包；旧版 luci-app-qmodem 在配置中禁用
 UPDATE_PACKAGE "qmodem" "FUjr/QModem" "main"
 
+# QModem 仓库按 feed（src-git）设计：顶层没有 Makefile，包分散在 application/、luci/、
+# driver/ 等二级目录。OpenWrt 的 package 扫描（package/Makefile 的 builddirs）只认含
+# Makefile 的一级子目录，仅把克隆目录放进 package/ 会整个不可见，导致
+# CONFIG_PACKAGE_luci-app-qmodem* / qmodem / sms-forwarder-next 等配置符号在 defconfig
+# 阶段被静默丢弃，固件里没有 qmodem。这里仿照上游 CI 的 src-link 方式把克隆目录注册为
+# 本地 feed，scripts/feeds 会递归扫描二级目录并把各包链接到 package/feeds/qmodem/ 下。
+# feeds 目录在 WRT-CORE 的 Update Feeds 步骤已就绪，此处仅增量处理 qmodem feed。
+REGISTER_QMODEM_FEED() {
+	local QMODEM_DIR="./QModem"
+	[ -d "$QMODEM_DIR" ] || { echo "qmodem: 克隆目录不存在，跳过 feed 注册"; return 1; }
+
+	# scripts/feeds 的解析顺序：feeds.conf 存在则完全替代 feeds.conf.default
+	local FEEDS_CONF="../feeds.conf"
+	[ -f "$FEEDS_CONF" ] || FEEDS_CONF="../feeds.conf.default"
+
+	# src-link 的目标按原样传给 ln -s，必须用绝对路径
+	local QMODEM_ABS="$(pwd)/QModem"
+	if ! grep -q "^src-link qmodem " "$FEEDS_CONF" 2>/dev/null; then
+		echo "src-link qmodem $QMODEM_ABS" >> "$FEEDS_CONF"
+	fi
+
+	# src-link 的 update 为空操作，只会创建 feeds/qmodem -> 克隆目录 的链接
+	if ! ( cd .. && ./scripts/feeds update qmodem && ./scripts/feeds install -a -p qmodem ); then
+		echo "qmodem: feed 注册失败，固件将不含 qmodem 包"
+		return 1
+	fi
+	echo "qmodem: 已注册为本地 feed 并安装到 package/feeds/qmodem/"
+}
+REGISTER_QMODEM_FEED
+
 # QModem 包共用 version.mk 的 QMODEM_VERSION（当前上游发布 "3.4.0-rc.3"）。
 # OpenWrt 新版 apk 打包器不接受 `-rc.N`：版本串被拼成 "3.4.0-rc.3-rN" 后，
 # apk mkpkg 报 "package version is invalid"（Error 99），阻断整个固件构建
