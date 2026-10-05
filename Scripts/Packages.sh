@@ -85,7 +85,15 @@ UPDATE_PACKAGE "qmodem" "FUjr/QModem" "main"
 # 本地 feed，scripts/feeds 会递归扫描二级目录并把各包链接到 package/feeds/qmodem/ 下。
 # feeds 目录在 WRT-CORE 的 Update Feeds 步骤已就绪，此处仅增量处理 qmodem feed。
 REGISTER_QMODEM_FEED() {
-	local QMODEM_DIR="./QModem"
+	# 先把克隆目录移出 package/：否则 package/ 主扫描会提前命中 QModem 二级目录里的
+	# Makefile（application/*、luci/*），把 luci-app-qmodem / qmodem 等注册为 core
+	# package，feeds install 时 "Not overriding core package" 直接跳过链接，配置符号
+	# 在 defconfig 阶段又被静默丢弃，LuCI 前端依旧进不了固件。
+	if [ -d "./QModem" ] && [ ! -d "../QModem" ]; then
+		mv -f ./QModem ../QModem
+		echo "qmodem: 克隆目录已移出 package/ 至 ../QModem"
+	fi
+	local QMODEM_DIR="../QModem"
 	[ -d "$QMODEM_DIR" ] || { echo "qmodem: 克隆目录不存在，跳过 feed 注册"; return 1; }
 
 	# scripts/feeds 的解析顺序：feeds.conf 存在则完全替代 feeds.conf.default
@@ -93,7 +101,7 @@ REGISTER_QMODEM_FEED() {
 	[ -f "$FEEDS_CONF" ] || FEEDS_CONF="../feeds.conf.default"
 
 	# src-link 的目标按原样传给 ln -s，必须用绝对路径
-	local QMODEM_ABS="$(pwd)/QModem"
+	local QMODEM_ABS="$(cd ../QModem && pwd)"
 	if ! grep -q "^src-link qmodem " "$FEEDS_CONF" 2>/dev/null; then
 		echo "src-link qmodem $QMODEM_ABS" >> "$FEEDS_CONF"
 	fi
@@ -114,7 +122,7 @@ REGISTER_QMODEM_FEED
 # X.Y.Z-rc.N 改写为 apk 合法的 X.Y.Z_rcN；QModem 各包源码均内嵌仓库 src/，
 # 无版本化下载依赖，改写只影响包版本元数据。若上游已改为合法版本，自动跳过。
 FIX_QMODEM_VERSION() {
-	local VER_FILE="./QModem/version.mk"
+	local VER_FILE="../QModem/version.mk"
 	[ -f "$VER_FILE" ] || { echo "qmodem: version.mk not found, skip"; return 0; }
 	if grep -qE '^QMODEM_VERSION:=[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$' "$VER_FILE"; then
 		sed -i -E 's/^(QMODEM_VERSION:=)([0-9]+\.[0-9]+\.[0-9]+)-rc\.([0-9]+)$/\1\2_rc\3/' "$VER_FILE"
@@ -135,7 +143,7 @@ FIX_QMODEM_VERSION
 # SMS 转发（ServerChan / Webhook / 自定义脚本）不受影响，仅去掉依赖 VoIP 栈的
 # SIP MESSAGE 通道。若上游调整依赖后已不含 +qmodem-sipd，自动跳过。
 FIX_QMODEM_VOIP_DEP() {
-	local SFN_FILE="./QModem/application/sms_forwarder_next/Makefile"
+	local SFN_FILE="../QModem/application/sms_forwarder_next/Makefile"
 	[ -f "$SFN_FILE" ] || { echo "qmodem: sms_forwarder_next/Makefile not found, skip"; return 0; }
 	if grep -q '+qmodem-sipd' "$SFN_FILE"; then
 		sed -i 's/ +qmodem-sipd//' "$SFN_FILE"

@@ -1,5 +1,60 @@
 # 更新日志
 
+## [2026-10-04] 修复 qmodem 主包与 LuCI 前端仍未进固件：补上 input-support 依赖
+
+### 背景
+
+feed（src-link）方式集成后，`tom_modem`、`libqmodem-sms`、`sms-forwarder-next`、
+`sms-tool_q` 等已成功编译进固件，但 `qmodem` 主包、`luci-app-qmodem-next` /
+`luci-app-qmodem` 及 `qmodem-settings` / `qmodem-smsd` 仍缺失。根因：qmodem 各 LuCI
+应用与主包的 Kconfig 均声明 `depends on PACKAGE_input-support`（LuCI 的 USB 输入设备
+支持包），而 `Config/QMODEM*.txt` 未启用它，导致这些符号在 defconfig 阶段被 Kconfig
+静默丢弃，即便配置中显式写了 `=y` 也不生效。
+
+### 变更
+
+- `Config/QMODEM-NEXT.txt`：新增 `CONFIG_PACKAGE_input-support=y`；
+- `Config/QMODEM.txt`：新增 `CONFIG_PACKAGE_input-support=y`（传统前端同样依赖）。
+
+本地复现验证：启用 input-support 后重新 defconfig，`CONFIG_PACKAGE_qmodem=y`、
+`CONFIG_PACKAGE_luci-app-qmodem-next=y`、`CONFIG_PACKAGE_qmodem-smsd=y`、
+`CONFIG_PACKAGE_qmodem-settings=y` 全部恢复（后三者由 luci-app-qmodem-next 的
+`select` 自动拉起）。
+
+### 变更文件
+
+- `Config/QMODEM-NEXT.txt`
+- `Config/QMODEM.txt`
+- `CHANGELOG.md`
+
+## [2026-10-04] 修复 qmodem LuCI 前端仍未编译进固件：QModem 移出 package/ 避免 core 包冲突
+
+### 背景
+
+2026-10-03 以 src-link 注册 qmodem feed 后，后端组件（quectel-CM-5G-M 等）已进入固件，
+但 `luci-app-qmodem` / `luci-app-qmodem-next` 等 LuCI 前端包仍在固件 manifest 中缺失。
+根因：`UPDATE_PACKAGE "qmodem"` 仍把克隆目录放在 `package/QModem/`，OpenWrt 主包扫描
+（package/Makefile 的 `builddirs`）先于 feed 注册命中 `package/QModem/application/*`、
+`package/QModem/luci/*` 下的 Makefile，把 `luci-app-qmodem` / `qmodem` / `qmodem-seal`
+等提前注册为 core package；随后 `feeds install` 对同名包报
+`WARNING: Not overriding core package 'luci-app-qmodem'; use -f to force` 并跳过链接，
+`CONFIG_PACKAGE_luci-app-qmodem*` 等符号在 defconfig 阶段被静默丢弃。
+
+### 变更
+
+- `Scripts/Packages.sh`：`REGISTER_QMODEM_FEED` 开头新增目录搬移——若 `package/QModem`
+  存在且工作区根尚无 `QModem`，先 `mv -f ./QModem ../QModem` 把克隆目录移出 `package/`，
+  再以 `src-link qmodem` 注册 feed；`QMODEM_DIR` / `QMODEM_ABS` 同步指向 `../QModem`，
+  使主包扫描不再提前抢注同名包，`feeds install -a -p qmodem` 可正常把所有二级目录包
+  链接到 `package/feeds/qmodem/`；
+- 同步修正 `FIX_QMODEM_VERSION`（`version.mk`）与 `FIX_QMODEM_VOIP_DEP`
+  （`sms_forwarder_next/Makefile`）的路径为 `../QModem/...`。
+
+### 变更文件
+
+- `Scripts/Packages.sh`
+- `CHANGELOG.md`
+
 ## [2026-10-03] 修复 qmodem 未编译进固件：改为 OpenWrt feed（src-link）方式集成
 
 ### 背景
