@@ -36,7 +36,14 @@ config-export 与固件 manifest，发现四项问题：
   `+tom_modem +jq +curl +ucode +ucode-mod-ubus +ucode-mod-uci`；
 - 2026-10-10 H5000M 两变体 Release config-export/manifest 实证 vendor 驱动三件套
   在固件中（本次修复对象）；
-- `bash -n` 语法校验与 LF 换行校验通过；OWRT-ALL TEST 构建已触发验证流水线。
+- OWRT-ALL TEST 构建（run 38089546420）两 job 全部 success，修复后 Packages.sh
+  无误导日志、feed 注册正常；
+- 本地 ImmortalWrt master 全新树按 CI 同构流程（feeds install + qmodem src-link
+  feed + X86-qmodem / X86-qmodem-next 配置拼接 + defconfig）复现验证，两变体均：
+  `qmodem_INCLUDE_generic-qmi-wwan=y` 生效、`kmod-qmi_wwan_f/_q/_s` 全部 not set、
+  `qmodem_USE_TOM_CUSTOMIZED_QUECTEL_CM=y` 生效、qmodem 主包 / 前端 /
+  qmodem-settings / qmodem-seal（next 变体另含 qmodem-smsd / sms-forwarder-next）
+  全部 =y。
 
 ### 变更文件
 
