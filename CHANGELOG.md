@@ -1,5 +1,51 @@
 # 更新日志
 
+## [2026-10-11] 修复 QMI 驱动选择符号失效 + 清理失效 qmodem 补丁脚本
+
+### 背景
+
+对照上游 FUjr/QModem（main @ c49654efc，3.4.0_rc3）核对 2026-10-10 Release 的
+config-export 与固件 manifest，发现四项问题：
+
+1. `Config/QMODEM.txt` 的 `luci-app-qmodem_INCLUDE_generic-qmi-wwan` 等符号在上游
+   不存在（上游 964d8dd32 把 QMI 驱动 choice 挂在 qmodem 主包：
+   `PACKAGE_qmodem_INCLUDE_*`），defconfig 静默丢弃后 choice 落到上游默认 vendor——
+   legacy 与 next 两个变体固件同时装了 kmod-qmi_wwan_f/_q/_s 与
+   kmod-usb-net-qmi-wwan，与"避免厂商/NSS 驱动冲突"的意图相反；
+2. `luci-app-qmodem_USE_TOM_CUSTOMIZED_QUECTEL_CM` 符号名同样无效，仅因 choice
+   默认值碰巧一致未出事；
+3. 上游 main 全树已无 input-support 依赖（2026-10-04 的修复针对的是当时的上游
+   状态），`CONFIG_PACKAGE_input-support=y` 已变成冗余安装；
+4. 上游已把 +qmodem-sipd 从 sms-forwarder-next 的 DEPENDS 降级为 PKG_RECOMMENDS
+   （NEXT 固件 manifest 无 qmodem-sipd，libwebsockets 冲突消失），`FIX_QMODEM_VOIP_DEP`
+   的 grep 误命中 RECOMMENDS 行但 sed 不生效，只会输出误导性的 "removed" 日志。
+
+### 变更
+
+- `Config/QMODEM.txt` / `Config/QMODEM-NEXT.txt`：改用有效符号
+  `qmodem_INCLUDE_generic-qmi-wwan=y`（next 变体首次显式固定 generic QMI）、
+  `qmodem_USE_TOM_CUSTOMIZED_QUECTEL_CM=y`、`qmodem_INCLUDE_SEAL=y`，
+  移除 input-support 行并同步更新注释；
+- `Config/GENERAL.txt`：清理三行无效的 luci-app-qmodem_INCLUDE_* 注释；
+- `Scripts/Packages.sh`：删除 FIX_QMODEM_VOIP_DEP 函数及调用（上游已自行消解，
+  脚本实际未修改任何文件）；FIX_QMODEM_VERSION 保留作上游版本格式回退（-rc.N）保护。
+
+### 验证
+
+- 上游 main 全树 grep 无 input-support；sms_forwarder_next DEPENDS 实测为
+  `+tom_modem +jq +curl +ucode +ucode-mod-ubus +ucode-mod-uci`；
+- 2026-10-10 H5000M 两变体 Release config-export/manifest 实证 vendor 驱动三件套
+  在固件中（本次修复对象）；
+- `bash -n` 语法校验与 LF 换行校验通过；OWRT-ALL TEST 构建已触发验证流水线。
+
+### 变更文件
+
+- `Config/QMODEM.txt`
+- `Config/QMODEM-NEXT.txt`
+- `Config/GENERAL.txt`
+- `Scripts/Packages.sh`
+- `CHANGELOG.md`
+
 ## [2026-10-04] 修复 qmodem 主包与 LuCI 前端仍未进固件：补上 input-support 依赖
 
 ### 背景
