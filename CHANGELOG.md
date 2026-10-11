@@ -1,5 +1,60 @@
 # 更新日志
 
+## [2026-10-11] 修复 qmodem 全链失选：input-support 是 ImmortalWrt 特性门控依赖，不可移除
+
+### 背景
+
+上午的核对提交（b9d4531）误判 `input-support` 为冗余依赖并予以移除，导致当晚
+8 个固件变体的 `qmodem`、`luci-app-qmodem(-next/-generic)` 及整条 select 链
+（tom_modem / modem_scan / qmodem-settings / qmodem-seal / libqmodem-sms /
+coreutils / coreutils-stat / jq / xxd / usbutils / usbids / ndisc6 /
+kmod-usb-acm / kmod-usb-serial-qualcomm / usbmuxd / libevdev / libsodium /
+libudev-zero 等 27 包）全部未进固件。
+
+### 根因
+
+ImmortalWrt master 已引入 `package/system/hardware-support` **特性门控机制**
+（audio-support / video-support / input-support / dvb-support 等 feature-gate 包）：
+input/HID/USB 串口等大量内核模块与用户态包在生成的 Kconfig 中
+`depends on PACKAGE_input-support`（本地实测：kmod-bluetooth、kmod-hid、
+kmod-input-evdev、kmod-uhid、bluez、hidapi、usbip 等 20+ 符号）。该依赖是
+**内核模块生态的门控**，不体现在 QModem 仓库任何 Makefile 中，因此此前
+"上游全树搜索无 input-support → 冗余" 的判断是错误的——2026-10-04 #23 的修复
+本就是为此。移除 `CONFIG_PACKAGE_input-support=y` 后：
+
+1. qmodem 硬依赖的 `kmod-usb-acm` / `kmod-usb-serial-qualcomm` 被 Kconfig 隐藏；
+2. `qmodem` 符号不可见，输入的 `=y` 被 defconfig 丢弃；
+3. 被 qmodem `select` 的全部组件回落为 n，依赖 +qmodem 的两个 LuCI 前端
+   （含 luci-app-qmodem-generic，其 DEPENDS 为 +luci-base +qmodem）级联消失。
+
+已排除的干扰因素（对照 run 38008945743 vs 38132979782 前日构建日志）：
+immortalwrt 基线 305089f→11152dd 仅含目标驱动补丁；两日 Kconfig 递归依赖
+错误（qt5base / squeezelite / mihomo）与依赖缺失告警逐行一致，均非本因。
+
+### 变更
+
+- `Config/QMODEM.txt` / `Config/QMODEM-NEXT.txt`：恢复
+  `CONFIG_PACKAGE_input-support=y`，注释改写为特性门控机制的真实解释；
+  保留 generic QMI 驱动修正（qmodem_INCLUDE_generic-qmi-wwan）与
+  USE_TOM_CUSTOMIZED_QUECTEL_CM / INCLUDE_SEAL 显式声明。
+
+### 验证
+
+- OWRT-ALL TEST 构建（run 38132979782，临时 debug 步骤直接输出 defconfig 结果）：
+  X86-qmodem / X86-qmodem-next 两 job 全部恢复
+  `qmodem=y`、`luci-app-qmodem=y`、`tom_modem/modem_scan/libqmodem-sms/
+  kmod-usb-acm/kmod-usb-serial-qualcomm/coreutils/jq/xxd/usbutils/ndisc6=y`；
+  同时 `kmod-usb-net-qmi-wwan=y` 且 `kmod-qmi_wwan_f/_q/_s` 未选中
+  （generic QMI 修正与门控修复互不干扰）；
+- 验证后已移除 WRT-CORE 临时 debug 步骤。
+
+### 变更文件
+
+- `Config/QMODEM.txt`
+- `Config/QMODEM-NEXT.txt`
+- `.github/workflows/WRT-CORE.yml`（临时 debug 步骤：已加已撤）
+- `CHANGELOG.md`
+
 ## [2026-10-11] 修复 QMI 驱动选择符号失效 + 清理失效 qmodem 补丁脚本
 
 ### 背景
