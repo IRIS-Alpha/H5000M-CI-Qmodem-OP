@@ -1,5 +1,113 @@
 # 更新日志
 
+## [2026-10-11] 修复 qmodem 全链失选：input-support 是 ImmortalWrt 特性门控依赖，不可移除
+
+### 背景
+
+上午的核对提交（b9d4531）误判 `input-support` 为冗余依赖并予以移除，导致当晚
+8 个固件变体的 `qmodem`、`luci-app-qmodem(-next/-generic)` 及整条 select 链
+（tom_modem / modem_scan / qmodem-settings / qmodem-seal / libqmodem-sms /
+coreutils / coreutils-stat / jq / xxd / usbutils / usbids / ndisc6 /
+kmod-usb-acm / kmod-usb-serial-qualcomm / usbmuxd / libevdev / libsodium /
+libudev-zero 等 27 包）全部未进固件。
+
+### 根因
+
+ImmortalWrt master 已引入 `package/system/hardware-support` **特性门控机制**
+（audio-support / video-support / input-support / dvb-support 等 feature-gate 包）：
+input/HID/USB 串口等大量内核模块与用户态包在生成的 Kconfig 中
+`depends on PACKAGE_input-support`（本地实测：kmod-bluetooth、kmod-hid、
+kmod-input-evdev、kmod-uhid、bluez、hidapi、usbip 等 20+ 符号）。该依赖是
+**内核模块生态的门控**，不体现在 QModem 仓库任何 Makefile 中，因此此前
+"上游全树搜索无 input-support → 冗余" 的判断是错误的——2026-10-04 #23 的修复
+本就是为此。移除 `CONFIG_PACKAGE_input-support=y` 后：
+
+1. qmodem 硬依赖的 `kmod-usb-acm` / `kmod-usb-serial-qualcomm` 被 Kconfig 隐藏；
+2. `qmodem` 符号不可见，输入的 `=y` 被 defconfig 丢弃；
+3. 被 qmodem `select` 的全部组件回落为 n，依赖 +qmodem 的两个 LuCI 前端
+   （含 luci-app-qmodem-generic，其 DEPENDS 为 +luci-base +qmodem）级联消失。
+
+已排除的干扰因素（对照 run 38008945743 vs 38132979782 前日构建日志）：
+immortalwrt 基线 305089f→11152dd 仅含目标驱动补丁；两日 Kconfig 递归依赖
+错误（qt5base / squeezelite / mihomo）与依赖缺失告警逐行一致，均非本因。
+
+### 变更
+
+- `Config/QMODEM.txt` / `Config/QMODEM-NEXT.txt`：恢复
+  `CONFIG_PACKAGE_input-support=y`，注释改写为特性门控机制的真实解释；
+  保留 generic QMI 驱动修正（qmodem_INCLUDE_generic-qmi-wwan）与
+  USE_TOM_CUSTOMIZED_QUECTEL_CM / INCLUDE_SEAL 显式声明。
+
+### 验证
+
+- OWRT-ALL TEST 构建（run 38132979782，临时 debug 步骤直接输出 defconfig 结果）：
+  X86-qmodem / X86-qmodem-next 两 job 全部恢复
+  `qmodem=y`、`luci-app-qmodem=y`、`tom_modem/modem_scan/libqmodem-sms/
+  kmod-usb-acm/kmod-usb-serial-qualcomm/coreutils/jq/xxd/usbutils/ndisc6=y`；
+  同时 `kmod-usb-net-qmi-wwan=y` 且 `kmod-qmi_wwan_f/_q/_s` 未选中
+  （generic QMI 修正与门控修复互不干扰）；
+- 验证后已移除 WRT-CORE 临时 debug 步骤。
+
+### 变更文件
+
+- `Config/QMODEM.txt`
+- `Config/QMODEM-NEXT.txt`
+- `.github/workflows/WRT-CORE.yml`（临时 debug 步骤：已加已撤）
+- `CHANGELOG.md`
+
+## [2026-10-11] 修复 QMI 驱动选择符号失效 + 清理失效 qmodem 补丁脚本
+
+### 背景
+
+对照上游 FUjr/QModem（main @ c49654efc，3.4.0_rc3）核对 2026-10-10 Release 的
+config-export 与固件 manifest，发现四项问题：
+
+1. `Config/QMODEM.txt` 的 `luci-app-qmodem_INCLUDE_generic-qmi-wwan` 等符号在上游
+   不存在（上游 964d8dd32 把 QMI 驱动 choice 挂在 qmodem 主包：
+   `PACKAGE_qmodem_INCLUDE_*`），defconfig 静默丢弃后 choice 落到上游默认 vendor——
+   legacy 与 next 两个变体固件同时装了 kmod-qmi_wwan_f/_q/_s 与
+   kmod-usb-net-qmi-wwan，与"避免厂商/NSS 驱动冲突"的意图相反；
+2. `luci-app-qmodem_USE_TOM_CUSTOMIZED_QUECTEL_CM` 符号名同样无效，仅因 choice
+   默认值碰巧一致未出事；
+3. 上游 main 全树已无 input-support 依赖（2026-10-04 的修复针对的是当时的上游
+   状态），`CONFIG_PACKAGE_input-support=y` 已变成冗余安装；
+4. 上游已把 +qmodem-sipd 从 sms-forwarder-next 的 DEPENDS 降级为 PKG_RECOMMENDS
+   （NEXT 固件 manifest 无 qmodem-sipd，libwebsockets 冲突消失），`FIX_QMODEM_VOIP_DEP`
+   的 grep 误命中 RECOMMENDS 行但 sed 不生效，只会输出误导性的 "removed" 日志。
+
+### 变更
+
+- `Config/QMODEM.txt` / `Config/QMODEM-NEXT.txt`：改用有效符号
+  `qmodem_INCLUDE_generic-qmi-wwan=y`（next 变体首次显式固定 generic QMI）、
+  `qmodem_USE_TOM_CUSTOMIZED_QUECTEL_CM=y`、`qmodem_INCLUDE_SEAL=y`，
+  移除 input-support 行并同步更新注释；
+- `Config/GENERAL.txt`：清理三行无效的 luci-app-qmodem_INCLUDE_* 注释；
+- `Scripts/Packages.sh`：删除 FIX_QMODEM_VOIP_DEP 函数及调用（上游已自行消解，
+  脚本实际未修改任何文件）；FIX_QMODEM_VERSION 保留作上游版本格式回退（-rc.N）保护。
+
+### 验证
+
+- 上游 main 全树 grep 无 input-support；sms_forwarder_next DEPENDS 实测为
+  `+tom_modem +jq +curl +ucode +ucode-mod-ubus +ucode-mod-uci`；
+- 2026-10-10 H5000M 两变体 Release config-export/manifest 实证 vendor 驱动三件套
+  在固件中（本次修复对象）；
+- OWRT-ALL TEST 构建（run 38089546420）两 job 全部 success，修复后 Packages.sh
+  无误导日志、feed 注册正常；
+- 本地 ImmortalWrt master 全新树按 CI 同构流程（feeds install + qmodem src-link
+  feed + X86-qmodem / X86-qmodem-next 配置拼接 + defconfig）复现验证，两变体均：
+  `qmodem_INCLUDE_generic-qmi-wwan=y` 生效、`kmod-qmi_wwan_f/_q/_s` 全部 not set、
+  `qmodem_USE_TOM_CUSTOMIZED_QUECTEL_CM=y` 生效、qmodem 主包 / 前端 /
+  qmodem-settings / qmodem-seal（next 变体另含 qmodem-smsd / sms-forwarder-next）
+  全部 =y。
+
+### 变更文件
+
+- `Config/QMODEM.txt`
+- `Config/QMODEM-NEXT.txt`
+- `Config/GENERAL.txt`
+- `Scripts/Packages.sh`
+- `CHANGELOG.md`
+
 ## [2026-10-04] 修复 qmodem 主包与 LuCI 前端仍未进固件：补上 input-support 依赖
 
 ### 背景
