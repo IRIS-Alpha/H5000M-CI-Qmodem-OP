@@ -296,6 +296,16 @@ jobs:
 
           make defconfig && make clean
 
+      - name: Debug qmodem config (TEMP, revert after verify)
+        run: |
+          cd ./wrt/
+          echo "=== [debug] qmodem chain symbols ==="
+          grep -E "^(# )?CONFIG_PACKAGE_(qmodem|qmodem-|luci-app-qmodem|input-support|kmod-usb-acm|kmod-usb-serial-qualcomm|tom_modem|modem_scan|usbutils|coreutils|jq|xxd|ndisc6|libqmodem-sms|kmod-qmi_wwan|kmod-usb-net-qmi-wwan)[= ]" .config | sort || true
+          echo "=== [debug] qmodem feed symlinks ==="
+          ls -la package/feeds/qmodem/ | head -8 || true
+          echo "=== [debug] PACKAGE symbol count ==="
+          grep -cE "^(# )?CONFIG_PACKAGE_" .config || true
+
       - name: Download Packages
         if: env.WRT_TEST != 'true'
         run: |
