@@ -64,7 +64,9 @@ env:
 jobs:
   core:
     name: ${{inputs.WRT_SOURCE}}
-    runs-on: ubuntu-latest
+    # ImmortalWrt's init_build_environment.sh currently supports noble (24.04)
+    # but rejects the resolute image used by ubuntu-latest.
+    runs-on: ubuntu-24.04
     # 略低于平台 6h 硬上限：触发硬上限会直接杀掉 runner，
     # 缓存的 post 保存步骤会被整段跳过（见 AP3000M-qmodem 被取消的那次运行）
     timeout-minutes: 345
