@@ -18,6 +18,14 @@
 
 </div>
 
+> [!NOTE]
+> 本仓库是 `IRIS-Alpha/H5000M-CI-Qmodem-OP` 对
+> [LianXia233/H5000M-CI-Qmodem](https://github.com/LianXia233/H5000M-CI-Qmodem)
+> 的社区 Fork。构建框架、设备配置及 README 所述功能以直接上游为主要来源；本 Fork
+> 额外选择 OpenClash 作为固件代理前端，具体包策略见 [`Config/PRIVATE.txt`](./Config/PRIVATE.txt)。
+> 本仓库及第三方组件的版权和许可仍以各自的许可证与版权声明为准，详见
+> [LICENSE](./LICENSE) 及对应项目声明。
+
 ---
 
 ## 🌟 核心特性亮点

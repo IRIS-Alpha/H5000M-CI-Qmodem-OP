@@ -1,0 +1,11 @@
+# Fork-specific firmware package policy.
+# Scripts/Settings.sh appends this after the selected device and variant configs.
+CONFIG_PACKAGE_luci-app-openclash=y
+
+# Keep OpenClash as the only proxy frontend and engine in this fork.
+# CONFIG_PACKAGE_luci-app-homeproxy is not set
+# CONFIG_PACKAGE_sing-box is not set
+# CONFIG_PACKAGE_momo is not set
+# CONFIG_PACKAGE_nikki is not set
+# CONFIG_PACKAGE_luci-app-passwall is not set
+# CONFIG_PACKAGE_luci-app-passwall2 is not set
