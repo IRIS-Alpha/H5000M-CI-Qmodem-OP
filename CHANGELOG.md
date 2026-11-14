@@ -1,5 +1,56 @@
 # 更新日志
 
+## [2026-11-14] CI：全面适配 Ubuntu 26.04 runner
+
+### 背景
+
+GitHub 自 2026-10-19 起把 `ubuntu-latest` 滚动迁移到 Ubuntu 26.04（预计 11-19 完成）。
+上游 `init_build_environment.sh` 的 `check_system()` 代号白名单只到 `noble`，
+26.04（`resolute`）会直接报 `[ERROR] Unsupported OS, use Ubuntu 20.04 instead.`
+并退出，导致全部编译作业停在初始化阶段。
+
+### 改动
+
+- 全部 `runs-on` 统一显式指定 `ubuntu-26.04`：迁移期内 `ubuntu-latest` 仍可能落到
+  24.04，显式标签才能保证三个仓库行为一致。
+- 新增 `.github/scripts/patch-init-env.py`：下载上游脚本后注入兼容补丁，把脚本内
+  `VERSION_CODENAME` 由 `resolute` 映射为 `noble`，复用上游已验证的 GCC 13 /
+  LLVM 23 / noble PPA 参数集；主 apt 源仍使用 runner 的 26.04 原生配置。
+  补丁幂等，上游原生支持 26.04 后自动跳过。
+- apt 镜像探测的代号兜底由 `noble` 改为 `resolute`。
+- 取代上一条「临时固定 24.04」的方案：不再回避迁移，改为正面适配 26.04。
+
+## [2026-11-14] CI：固定 runner 为 Ubuntu 24.04，修复 ubuntu-latest 迁移至 26.04 后的构建失败
+
+### 背景
+
+2026-11-14 的 `MTK-AUTO`（run 43538890288）与 `OWRT-ALL`（run 43538890447）
+全部 8 个矩阵作业都在 `Initialization Environment` 阶段失败。日志显示：
+
+```text
+[INFO] Checking system info...
+[ERROR] Unsupported OS, use Ubuntu 20.04 instead.
+```
+
+`ubuntu-latest` 自 2026-10-19 起迁移到 Ubuntu 26.04，而上游
+`init_build_environment.sh` 的 `check_system()` 只识别到 `noble`（24.04），
+遇到 26.04 的 codename 直接 `exit 1`。两次重试均在同一处失败，构建无法进入
+源码克隆与编译阶段。
+
+### 改动
+
+- `.github/workflows/` 4 处 `runs-on: ubuntu-latest` → `ubuntu-24.04`：
+  `WRT-CORE.yml`（编译核心）、`WRT-BUILD.yml`（resolve）、
+  `Auto-Clean.yml`、`Cache-Clean.yml`。
+- 固定到上游脚本明确支持的 noble，避免 `ubuntu-latest` 后续再次漂移；
+  后续上游支持新版本时再同步调整。
+- `README.md` 工作流矩阵补充固定 runner 版本的说明。
+
+### 生效范围
+
+仅调整 CI 运行环境，源码、配置、产物命名与 Release 流程均未改动；
+缓存键不含 runner 版本，已有工具链与下载缓存仍可复用。
+
 ## [2026-11-12] CI：GitHub Actions 统一升级至 Node 24 运行时
 
 ### 背景

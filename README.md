@@ -245,6 +245,12 @@ Rust 后端用**官方 Rust SDK**（rustup stable + `aarch64-unknown-linux-musl`
 | **`Auto-Clean.yml`** | 每日定时 05:00 (CST) | 轮换保留最新一份 Release，自动清理过期 Tag 与 30 天以前的 Actions 日志 |
 | **`Cache-Clean.yml`** | 每周定时 / 手动 | 回收 Actions 编译缓存，避免依赖冲突 |
 
+> 所有作业统一运行在 `ubuntu-26.04`。`ubuntu-latest` 自 2026-10-19 起滚动迁移到
+> Ubuntu 26.04（迁移期内仍可能落到 24.04），因此显式锁定标签。上游
+> `init_build_environment.sh` 仅识别到 `noble`，初始化步骤会注入兼容补丁把脚本内
+> 代号映射为 `noble`，复用已验证的 GCC 13 / LLVM 23 工具链参数集，避免
+> `Unsupported OS` 直接退出。
+
 ### 手动构建步骤指引
 
 1. 登录 GitHub，进入仓库 **Actions** 页面；

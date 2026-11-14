@@ -50,7 +50,8 @@ jobs:
   # 按机型与所选源码仓库自动推导「源码 + 分支」，避免仓库与分支手动组合出错
   resolve:
     name: Resolve Source
-    runs-on: ubuntu-latest
+    # 与 WRT-CORE 保持一致，统一使用 Ubuntu 26.04
+    runs-on: ubuntu-26.04
     outputs:
       source: ${{ steps.resolve.outputs.source }}
       branch: ${{ steps.resolve.outputs.branch }}

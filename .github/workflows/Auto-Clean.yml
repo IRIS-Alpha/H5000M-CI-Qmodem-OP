@@ -19,7 +19,8 @@ permissions: write-all
 
 jobs:
   auto_clean:
-    runs-on: ubuntu-latest
+    # 统一使用 Ubuntu 26.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout Config (device names for keep-latest)
         uses: actions/checkout@v7
