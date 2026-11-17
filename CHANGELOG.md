@@ -1,4 +1,65 @@
 # 更新日志
+## [2026-11-17] 修复产物架构段自检误判，Package Firmware 全红
+
+### 背景
+
+今天（11-17）定时批次 `OWRT-ALL`（44009565892）与 `MTK-AUTO`（44009565891）共 4 个作业
+在「Compile Firmware」全部成功后，倒在最后一步「Package Firmware」，注解分别为：
+
+```text
+##[error]产物架构段 [x86] 与 WRT_ARCH [x86-64] 不一致（文件=X86-qmodem-x86-64-26.11.17-combined.vmdk）
+##[error]产物架构段 [next] 与 WRT_ARCH [x86-64] 不一致（文件=X86-qmodem-next-x86-64-26.11.17-combined.vmdk）
+##[error]产物架构段 [next] 与 WRT_ARCH [aarch64] 不一致（文件=H5000M-qmodem-next-aarch64-26.11.17-sysupgrade.bin）
+##[error]产物架构段 [modem] 与 WRT_ARCH [aarch64] 不一致（文件=H5000M-modem-pro-aarch64-26.11.17-sysupgrade.bin）
+```
+
+根因是 11-17 00:55 提交 `654f642` 新增的架构自检用了 `cut -d '-' -f 3` 取「第 3 段」，
+而新命名 `<机型>-<变体>-<架构>-<YY.MM.DD>-<类型>` 里前两段都可能自带连字符：
+
+- 架构段 `x86-64` 自带连字符 → 只剩 `x86`；
+- 机型名 `X86-qmodem-next` / `H5000M-modem-pro` 自带连字符 → 第 3 段被挤成 `next` / `modem`。
+
+只要声明架构是 `x86-64`，或机型名超过两个词，自检就必然误报，与产物无关。
+
+### 改动
+
+- `.github/workflows/WRT-CORE.yml`：架构段自检不再按位置切分，改为按已知前后缀精确剥离——
+  先去掉 `<WRT_CONFIG>-` 前缀，再截到 `-<WRT_DATE_DOT>-` 之前，然后与 `WRT_ARCH` 比对。
+  连字符数量不再影响结果：`x86` / `x86-64` / `aarch64`、两段式与三段式机型名全部覆盖，
+  架构段真被篡改时依然报错退出。
+
+### 验证
+
+- 本地用例：`X86-qmodem`、`X86-qmodem-next`（`x86-64`）、`H5000M-qmodem`、`H5000M-qmodem-next`、
+  `H5000M-modem-pro`、`AP3000M-qmodem-next`（`aarch64`）全部解析正确，错配用例仍被拦截。
+- 真机：`OWRT-ALL` 手动批次 44016496633 整体 success（`X86-qmodem`、`X86-qmodem-next` 打包通过）；
+  `MTK-AUTO` 手动批次 44016653835 中此前失败的两个作业 `H5000M-qmodem-next`、`H5000M-modem-pro`
+  打包通过。
+
+## [2026-11-17] 固件版本标记扩展为结构化多字段
+
+### 改动
+
+- `Scripts/OnlineUpgradePreset.sh`：`firmware-version` 从单行版本号升级为 shell key=value 五字段——`DEVICE`（机型）/`ARCH`（架构）/`BUILD_TIME`（ISO8601 秒+时区）/`BUILD_SEQ`（`seq-<run_id>`，全局唯一、重跑不变、并发不冲突）/`VERSION`（版本）。字段缺失时按约定回退、不阻断；VERSION 缺失则现算 YY.MM.DD。写入后自检字段闭合。
+- `.github/workflows/WRT-CORE.yml`：编译前校验五个字段齐全且 VERSION 等于本次编译日期。
+- 插件 2.6.13 只从 VERSION 取版本，其余字段进判定依据展示，完全兼容旧单行格式。
+
+## [2026-11-17] CI 自动注入固件版本标记，消除在线升级「判定依据较弱」
+
+### 改动
+
+- `Scripts/OnlineUpgradePreset.sh`：构建期自动写 `./files/etc/online-upgrade/firmware-version`，内容为本次编译日期 `WRT_DATE_DOT`（`YY.MM.DD`，与 tag/资产同源），随固件刷新、每天自动升版；写入后自检内容一致。
+- `Scripts/Settings.sh`：调用 preset 增加 `|| exit 1`，注入失败即阻断构建。
+- `.github/workflows/WRT-CORE.yml`：编译前校验标记文件存在且内容等于 `WRT_DATE_DOT`，否则红掉。
+- 根因：此前只生成 UCI 预设、从未写固件版本标记，插件只能靠构建时间/过期锚点推断，恒显「判定依据较弱」。
+
+## [2026-11-17] 三仓库统一在线升级规则：独立 tag_rule + 统一产物命名
+
+### 改动
+
+- `Scripts/OnlineUpgradePreset.sh`：`tag=latest` + 独立 `tag_rule=^<WRT_CONFIG>-<INFO>-<BRANCH>-`；产物正则改为 `<WRT_CONFIG>-<架构>-<YY.MM.DD>-<类型>`，兼容新旧日期格式；自检键数 10 → 11。
+- `.github/workflows/WRT-CORE.yml`：新增 `WRT_ARCH`（X86 → x86-64，其余 → aarch64）与点分日期 `WRT_DATE_DOT`；打包统一为 `<WRT_CONFIG>-<架构>-<YY.MM.DD>-<类型>.<ext>`，并加架构段自检。
+
 ## [2026-11-15] 修复官方源 firewall4 源码升级导致 Compile Firmware 全红
 
 ### 背景
