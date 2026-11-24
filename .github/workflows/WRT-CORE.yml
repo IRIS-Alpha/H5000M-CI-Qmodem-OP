@@ -969,7 +969,7 @@ jobs:
             插件列表：${{env.WRT_LIST}}
             ${{env.WRT_SHA256_TABLE}}
 
-      # 发布成功后再清理旧 Releases（保留本次 Tag）。
+      # 发布成功后再清理旧 Releases，同组保留最近 5 次发布。
       # 旧流程由 Auto-Clean 每天 05:00 先清空全部 Releases 再触发编译，
       # 一旦当天编译失败，历史固件也已经被删光、无处回滚。现在改为：
       # 本次固件成功发布后才删除「同配置」的历史版本；
@@ -984,41 +984,50 @@ jobs:
           set -euo pipefail
 
           REPO="${{ github.repository }}"
-          CUR_TAG="${WRT_CONFIG}-${WRT_INFO}-${WRT_BRANCH}-${WRT_DATE}"
           PREFIX="${WRT_CONFIG}-${WRT_INFO}-${WRT_BRANCH}-"
+          KEEP_COUNT=5
 
-          echo ">>> 清理历史 Releases（前缀 ${PREFIX}，保留本次 ${CUR_TAG}）"
+          echo ">>> 清理历史 Releases（前缀 ${PREFIX}，保留最近 ${KEEP_COUNT} 个）"
 
           # 1. 分页拉取全部非草稿 Release（先取全量再删，避免边翻页边删除漏项）
           ALL=$(mktemp)
           PAGE=1
           while :; do
             DATA=$(gh api "repos/${REPO}/releases?per_page=100&page=${PAGE}" \
-              --jq '.[] | select(.draft==false) | "\(.id)\t\(.tag_name)"')
+              --jq '.[] | select(.draft==false) | "\(.published_at)\t\(.id)\t\(.tag_name)"')
             [ -z "${DATA}" ] && break
             printf '%s\n' "${DATA}" >> "${ALL}"
             PAGE=$((PAGE + 1))
           done
 
-          # 2. 仅删除同组（同配置 + 同源码分支）的历史 Tag，本次 Tag 始终保留
+          # 2. 按发布时间倒序（同秒按 Release ID 倒序），仅删除同组较早版本。
+          #    并发构建完成顺序可能不同，不能假设当前任务发布的一定是最新版本。
           DELETED=0
-          while IFS=$'\t' read -r RID RTAG; do
+          SEEN=0
+          while IFS=$'\t' read -r PUBLISHED RID RTAG; do
             [ -z "${RID}" ] && continue
             case "$RTAG" in
               "$PREFIX"*) ;;
               *) continue ;;
             esac
-            [ "$RTAG" = "$CUR_TAG" ] && continue
+            # 避免分支名前缀相同的其他组被误匹配。
+            SUFFIX="${RTAG#"$PREFIX"}"
+            [[ "$SUFFIX" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{2}-[0-9]{2}\.[0-9]{2}\.[0-9]{2}$ ]] || continue
+            SEEN=$((SEEN + 1))
+            if [ "$SEEN" -le "$KEEP_COUNT" ]; then
+              echo "  [keep] ${RTAG} (published=${PUBLISHED})"
+              continue
+            fi
 
             echo "  [delete] ${RTAG} (id=${RID})"
-            gh api "repos/${REPO}/releases/${RID}" -X DELETE --silent || true
-            # 二次确认：部分情况下 Tag 不会随 Release 自动删除
-            gh api "repos/${REPO}/git/refs/tags/${RTAG}" -X DELETE --silent 2>/dev/null || true
-            DELETED=$((DELETED + 1))
-          done < "${ALL}"
+            if gh api "repos/${REPO}/releases/${RID}" -X DELETE --silent; then
+              gh api "repos/${REPO}/git/refs/tags/${RTAG}" -X DELETE --silent 2>/dev/null || true
+              DELETED=$((DELETED + 1))
+            fi
+          done < <(LC_ALL=C sort -t $'\t' -k1,1r -k2,2nr "$ALL")
 
           rm -f "${ALL}"
-          echo "=== 已清理 ${DELETED} 个历史 Release，保留 ${CUR_TAG} ==="
+          echo "=== 已清理 ${DELETED} 个历史 Release，保留最近 ${KEEP_COUNT} 个 ==="
 
       # save-always 已弃用且行为不可靠，改为独立的 restore/save 两步。
       # save 放在作业末尾并用 always()，保留「即使前面步骤失败也保存缓存」的语义；
