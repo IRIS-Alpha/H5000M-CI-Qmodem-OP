@@ -155,7 +155,8 @@ class Checker:
             )
             self.require("CONFIG_PACKAGE_kmod-cryptodev", "H5000M 内核调整")
             self.require("CONFIG_PACKAGE_kmod-tls", "H5000M 内核调整")
-            self.require("CONFIG_PACKAGE_luci-app-h5000m-fancontrol", "H5000M 风扇控制")
+            self.require("CONFIG_PACKAGE_luci-app-h5000m-pwmfan", "H5000M 风扇控制")
+            self.require("CONFIG_PACKAGE_kmod-hwmon-pwmfan", "H5000M PWM 风扇内核模块")
             self.require("CONFIG_PACKAGE_luci-app-h5000m-netmode", "H5000M 网络模式")
         elif self.name.startswith("AP3000M-"):
             self.require(

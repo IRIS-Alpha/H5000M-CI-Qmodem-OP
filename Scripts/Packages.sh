@@ -151,6 +151,29 @@ REGISTER_QMODEM_FEED() {
 	echo "qmodem: 已注册为本地 feed 并安装到 package/feeds/qmodem/"
 }
 
+# ===== luci-app-h5000m-pwmfan：H5000M 风扇控制插件（独立 GitHub 仓库，src-git feed）=====
+# 仓库本身就是 feed 形状（顶层 luci-app-h5000m-pwmfan/Makefile），可直接用 src-git。
+# 不要用 UPDATE_PACKAGE 克隆：那会把仓库放进 package/，包就成了 core package，
+# 随后 feeds install 以 "Not overriding core package" 拒绝建链接，符号被静默丢弃。
+REGISTER_H5000M_FEED() {
+	local FEEDS_CONF="../feeds.conf"
+	if [ ! -f "$FEEDS_CONF" ]; then
+		FEEDS_CONF="../feeds.conf.default"
+	fi
+	if [ ! -f "$FEEDS_CONF" ]; then
+		echo "::error title=Feeds config missing::../feeds.conf 与 ../feeds.conf.default 均不存在"
+		return 1
+	fi
+	if ! grep -q "^src-git h5000m " "$FEEDS_CONF" 2>/dev/null; then
+		echo "src-git h5000m https://github.com/IRIS-Alpha/h5000m-pwmfan.git" >> "$FEEDS_CONF"
+	fi
+	if ! ( cd .. && ./scripts/feeds update h5000m && ./scripts/feeds install -a -p h5000m ); then
+		echo "::error title=Fan plugin feed failed::scripts/feeds 无法注册 h5000m feed（固件将不含风扇控制插件）"
+		return 1
+	fi
+	echo "h5000m: 已注册为 src-git feed 并安装到 package/feeds/h5000m/"
+}
+
 # QModem 包共用 version.mk 的 QMODEM_VERSION。
 # OpenWrt 新版 apk 打包器不接受 `-rc.N` / `-rcN`：版本串被拼成 "3.4.0-rc.3-rN" 后，
 # apk mkpkg 报 "package version is invalid"（Error 99），阻断整个固件构建。
@@ -185,6 +208,12 @@ if [[ "${WRT_CONFIG:-}" != *modem-pro ]]; then
 else
 	echo "modem-pro: 跳过 QModem 克隆、feed 注册与 luci-app-qmodem-generic（隔离 QModem 依赖链）"
 fi
+
+# 风扇控制插件只对 H5000M 有意义（pwm-fan 在 H5000M 的 hwmon 上）；AP3000M、X86
+# 等机型不注册，免得白白克隆仓库、污染包索引。
+case "${WRT_CONFIG:-}" in
+*H5000M*) REGISTER_H5000M_FEED ;;
+esac
 
 # ===== modem-pro-unified：单一包 modem-pro（H5000M / AP3000M 共用，替代 QModem 模组管理）=====
 # 仓库顶层即唯一 Makefile，包位于 feed 根目录。但 OpenWrt 的 scripts/feeds 扫描要求包
@@ -271,8 +300,7 @@ FIX_SINGBOX_STALE_PATCH() {
 }
 FIX_SINGBOX_STALE_PATCH
 
-# FAN789 插件及其他专用硬件插件
-UPDATE_PACKAGE "luci-app-h5000m-fancontrol" "FAN789/luci-app-h5000m-fancontrol" "main"
+# 其他专用硬件插件（H5000M 风扇控制已改为 h5000m-pwmfan feed，见 REGISTER_H5000M_FEED）
 # AirPi AP3000M 专用（luci-app-airpi-fancontrol + airpi-gpio-fan 内核模块）：
 # 仅 AP3000M 配置引入。该插件按 AP3000M 的 GPIO / PWM / 温度传感器适配，
 # H5000M 与 X86 用不到，也不具备对应硬件依赖，无需拉取（省一次克隆与包扫描）

@@ -853,6 +853,16 @@ jobs:
           if [[ $WRT_TEST != 'true' ]]; then
             echo "WRT_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
             echo "WRT_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
+            # 符号在 defconfig 阶段被静默丢弃时固件照样编得出来，只有 manifest
+            # 能证明包真的进了镜像——必须赶在下面删 manifest 之前断言。
+            case "$WRT_CONFIG" in
+              *H5000M*)
+                if ! find ./bin/targets/ -type f -name "*.manifest" -exec grep -q '^luci-app-h5000m-pwmfan ' {} +; then
+                  echo "::error title=Fan plugin missing::manifest 中没有 luci-app-h5000m-pwmfan，固件将不含风扇控制插件（$WRT_CONFIG）"
+                  exit 1
+                fi
+                ;;
+            esac
 
             find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
 

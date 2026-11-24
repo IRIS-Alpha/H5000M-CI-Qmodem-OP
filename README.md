@@ -225,7 +225,7 @@ Rust 后端用**官方 Rust SDK**（rustup stable + `aarch64-unknown-linux-musl`
 
 
 ### 2. 硬件风扇温控与多网切换
-- **双温区联动风扇控制 (`luci-app-h5000m-fancontrol`)**：定时轮询 CPU 与模组硬件传感器，通过阶梯 PWM 曲线实现静音与强效散热平衡；
+- **双温区联动风扇控制 (`luci-app-h5000m-pwmfan`)**：以传感器为输入的自动曲线、目标温度驱动与固定占空比三种模式，接管期间仍保留内核热区保护；
 - **多网络智能切换 (`luci-app-h5000m-netmode`)**：支持“纯 5G”、“纯 WAN 有线”及“主备热备 / 负载均衡”三档模式，配合 `mwan3` 探针实现毫秒级容灾切流；
 - **AP3000M EEPROM 自动化射频恢复**：开机自启服务 `99-ap3000m-eeprom` 自动提取物理 MAC 并写入 factory 分区，激活 Wi-Fi 6 射频。
 
