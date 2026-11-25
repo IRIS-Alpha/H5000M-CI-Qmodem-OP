@@ -485,6 +485,7 @@ jobs:
           cd ./wrt/package/
 
           $GITHUB_WORKSPACE/Scripts/Packages.sh
+          python3 "$GITHUB_WORKSPACE/Scripts/customize_luci_labels.py" "$PWD" "$WRT_VARIANT"
           $GITHUB_WORKSPACE/Scripts/Handles.sh
 
       - name: Custom Settings
