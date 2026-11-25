@@ -7,19 +7,29 @@
 [![Release](https://img.shields.io/github/v/release/IRIS-Alpha/H5000M-CI-Qmodem-OP?style=for-the-badge&color=0284c7)](https://github.com/IRIS-Alpha/H5000M-CI-Qmodem-OP/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6366f1?style=for-the-badge)](LICENSE)
 
+<br>
+
 ## 📄 许可证
 
 > [!IMPORTANT]
 > 本仓库的构建脚本与配置沿用上游 [MIT 许可证及版权声明](LICENSE)；
 > 固件中的各组件适用各自的许可证与版权声明。使用或再分发前请自行确认。
 
+<br>
+
 ## ⬇️ 下载固件
 
 **[从 GitHub Releases 下载本仓库固件](https://github.com/IRIS-Alpha/H5000M-CI-Qmodem-OP/releases)**
 
+<br>
+
 ## 🧭 关于上游
 
-本项目 Fork 自 LianXia233/H5000M-CI-Qmodem。设备支持、模组方案、在线升级与通用构建说明见 [上游 README](https://github.com/LianXia233/H5000M-CI-Qmodem#readme)。
+本项目 Fork 自 [LianXia233/H5000M-CI-Qmodem](https://github.com/LianXia233/H5000M-CI-Qmodem)。
+
+设备支持、模组方案、在线升级与通用构建说明见 [上游 README](https://github.com/LianXia233/H5000M-CI-Qmodem#readme)。
+
+<br>
 
 ## 🔧 本仓库改动
 
@@ -31,6 +41,8 @@
 | 🈶 简体中文界面 | Vantage 的「仪表盘」改为「概览」，QModem Next 的「调制解调器」改为「模组」 |
 
 各机型编译配置见 [`Config/`](Config/)，历史变更见 [`CHANGELOG.md`](CHANGELOG.md)。
+
+<br>
 
 ## 🏠 路由器出厂默认配置
 
@@ -45,6 +57,8 @@
 > [!TIP]
 > 刷机后接入设备的 LAN 口，或在设备提供 Wi-Fi 时连接 `OWRT`。打开 `http://192.168.10.1`，
 > 用 `root` 和空密码登录，再按页面提示设置管理密码。完整出厂参数见 [`Config/OWRT-DEFAULT.txt`](Config/OWRT-DEFAULT.txt)。
+
+<br>
 
 ## 📦 固件产物命名规则
 
