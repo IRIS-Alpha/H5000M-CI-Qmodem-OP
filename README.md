@@ -37,6 +37,8 @@
 | --- | --- |
 | 🛡️ 默认代理 | 默认使用 OpenClash，包选择见 [`Config/PRIVATE.txt`](Config/PRIVATE.txt) |
 | 🌀 H5000M 风扇 | 使用 [`h5000m-pwmfan`](https://github.com/IRIS-Alpha/h5000m-pwmfan) 替换上游默认风扇插件 |
+| 📦 H5000M 软件源 | 不在固件的 APK 软件源列表中写入没有二进制仓库的 `h5000m`、`qmodem` 或 `modem_pro` 条目，避免 `apk update` 请求不存在的索引；不影响对应插件随固件编译 |
+| ⏱️ 定时构建 | [`MTK-AUTO`](.github/workflows/MTK-AUTO.yml) 只定时构建 H5000M 的 QModem Next 和 Modem Pro；H5000M 传统版、AP3000M 和 x86 仍可手动构建 |
 | 🧹 Release 保留 | 固件发布成功后，按编译配置、源码仓库所有者与分支分组，每组保留最近 5 个已发布的 Release；手动运行 `Auto-Clean` 时有独立清理选项，默认清理全部非草稿 Release |
 | 🈶 简体中文界面 | Vantage 的「仪表盘」改为「概览」，QModem Next 的「调制解调器」改为「模组」 |
 
