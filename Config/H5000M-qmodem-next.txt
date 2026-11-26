@@ -22,3 +22,9 @@ CONFIG_PACKAGE_luci-app-h5000m-fancontrol=n
 # 插件改由 h5000m-pwmfan feed 提供；旧 fancontrol 与它抢同一路 pwm1，必须二选一
 CONFIG_PACKAGE_luci-app-h5000m-pwmfan=y
 CONFIG_PACKAGE_luci-i18n-h5000m-pwmfan-zh-cn=y
+
+# 软件源：自定义 feed 只在构建机有源码，下载站没有对应的二进制仓库。
+# 不声明为未设置时，镜像的 distfeeds.list 会带上 h5000m 与 qmodem 两行，
+# 设备上 apk update 返回 2、apk upgrade 直接拒绝执行（rc=99）。
+# CONFIG_FEED_h5000m is not set
+# CONFIG_FEED_qmodem is not set
